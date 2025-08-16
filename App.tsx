@@ -194,7 +194,7 @@ const App: React.FC = () => {
     }
   };
 
-  const backgroundUrl = `url('/assets/casino-background2.jpeg')`;
+  const backgroundUrl = `url('/casino-background2.jpeg')`;
 
   return (
     <div

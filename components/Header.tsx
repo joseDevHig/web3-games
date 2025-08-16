@@ -65,7 +65,7 @@ const Header: React.FC<HeaderProps> = ({
             </button>
           ) : (
             <img
-              src="/assets/logo.png"
+              src="/logo.png"
               alt="Lobby Logo"
               className="h-full w-auto object-contain"
             />
