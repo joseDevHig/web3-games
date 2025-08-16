@@ -22,7 +22,7 @@ import { FiCopy } from "react-icons/fi";
 type Database = any;
 
 // --- GAME CONSTANTS ---
-const TURN_DURATION = 3600; // seconds
+const TURN_DURATION = 30; // seconds
 const AI_THINK_TIME = 1500; // ms
 const HAND_SIZE = 5;
 const MATCHMAKING_TIMEOUT = 30; // seconds
