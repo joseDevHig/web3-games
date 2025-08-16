@@ -242,7 +242,10 @@ const DominoLobby: React.FC<
 
     seedDatabase();
 
-    const buildCategorized = (roomsData: Record<string, any>) => {
+    const buildCategorized = (
+      roomsData: Record<string, any>,
+      matchesByRoom: Record<string, Match | null>
+    ) => {
       const categorized: typeof cashRooms = {
         "1v1": [],
         "2v2": [],
@@ -250,7 +253,7 @@ const DominoLobby: React.FC<
         ai: { "1v1": [], "2v2": [], free: [] },
       };
 
-      // IA
+      // Rooms IA
       freeRoomsData
         .filter((r) => r.variant === variant)
         .forEach((r, i) => {
@@ -258,10 +261,10 @@ const DominoLobby: React.FC<
             ...r,
             id: `ai_${variant}_${r.mode}_${i}`,
             privacy: "public" as const,
-          } as Room); // si Room exige fields, ajusta aquí
+          } as Room);
         });
 
-      // Reales
+      // Rooms reales
       Object.entries(roomsData || {}).forEach(
         ([roomId, room]: [string, any]) => {
           if (
@@ -269,6 +272,18 @@ const DominoLobby: React.FC<
             room.privacy === "public" &&
             categorized[room.mode as RoomMode]
           ) {
+            const match = matchesByRoom[roomId] || null;
+
+            // 👇 Filtro: si es creada por user y su match está en playing/gameOver → no la mostramos
+            if (
+              room.createdBy === "user" &&
+              (match?.gameState?.phase === "playing" ||
+                match?.gameState?.phase === "gameOver")
+            ) {
+              return; // se oculta
+            }
+
+            // si pasa el filtro se agrega
             categorized[room.mode as RoomMode].push({ id: roomId, ...room });
           }
         }
@@ -280,19 +295,12 @@ const DominoLobby: React.FC<
     const handleRoomsValue = (snapshot: any) => {
       const roomsData = snapshot.val() || {};
 
-      const filteredRooms = Object.fromEntries(
-        Object.entries(roomsData).filter(([_, room]: [string, any]) => {
-          return room?.gameState?.phase !== "playing" || room?.gameState?.phase !== "gameOver";
-        })
-      );
-
-      const categorized = buildCategorized(filteredRooms);
-      setCashRooms(categorized);
-      setIsLoading(false);
-
+      
       const userRoomIds = Object.entries(roomsData)
         .filter(([, r]: any) => r?.createdBy === "user")
         .map(([id]) => id);
+
+     
       Object.keys(matchSubsRef.current).forEach((roomId) => {
         if (!userRoomIds.includes(roomId)) {
           const { query, cb } = matchSubsRef.current[roomId];
@@ -306,21 +314,42 @@ const DominoLobby: React.FC<
         }
       });
 
+      
       userRoomIds.forEach((roomId) => {
         if (!matchSubsRef.current[roomId]) {
           const query = matchesRef
             .orderByChild("roomTemplateId")
             .equalTo(roomId);
+
           const cb = (msnap: any) => {
             const obj = msnap.val() || null;
             const match: Match | null = obj
               ? (Object.values(obj)[0] as Match)
               : null;
-            setMatchesByRoom((prev) => ({ ...prev, [roomId]: match }));
+
+            setMatchesByRoom((prev) => {
+              const next = { ...prev, [roomId]: match };
+
+            
+              const categorized = buildCategorized(roomsData, next);
+              setCashRooms(categorized);
+              setIsLoading(false);
+
+              return next;
+            });
           };
+
           query.on("value", cb);
           matchSubsRef.current[roomId] = { query, cb };
         }
+      });
+
+      
+      setMatchesByRoom((prev) => {
+        const categorized = buildCategorized(roomsData, prev);
+        setCashRooms(categorized);
+        setIsLoading(false);
+        return prev;
       });
     };
 
@@ -335,6 +364,7 @@ const DominoLobby: React.FC<
       matchSubsRef.current = {};
     };
   }, [database, variant]);
+
   const handleCreateRoom = (roomDetails: Omit<Room, "id">): Promise<void> => {
     const newRoomRef = database.ref("rooms").push();
     const roomId = newRoomRef.key as string;
