@@ -110,7 +110,7 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
     );
     if (board.length === 1) {
       setIsDealing(true);
-      const audio = new Audio("assets/repartir.ogg");
+      const audio = new Audio("/repartir.ogg");
       audio.play().catch((e) => console.error("Error playing sound:", e));
 
       // Reset after animation is done (should match CSS transition duration)
