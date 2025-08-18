@@ -1,4 +1,5 @@
 import React from "react";
+import { Domino } from "./types";
 
 type DominoValue = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -11,8 +12,14 @@ interface DominoTileProps {
   onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
   onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
   isDragging?: boolean;
+  isClicked?: boolean;
   faceDown?: boolean;
   orientation?: "vertical" | "horizontal";
+  isInTable?: boolean;
+  clickedTile: {
+    domino: Domino;
+    index: number;
+} | null
 }
 
 const Dot: React.FC = () => (
@@ -51,8 +58,11 @@ const DominoTile: React.FC<DominoTileProps> = ({
   onDragStart,
   onClick,
   isDragging,
+  isClicked,
   faceDown,
   orientation = "vertical", // Orientación visual por defecto
+  isInTable,
+  clickedTile,
 }) => {
   // Definimos las dimensiones base en unidades "rem"
   const baseShortDim = 3; // Corresponde a 48px con 1rem=16px
@@ -95,18 +105,33 @@ const DominoTile: React.FC<DominoTileProps> = ({
     ? "shadow-[0_0_0_2px_rgba(251,191,36,0.8)]" // Borde amarillo para jugable
     : "";
 
-  const draggingClasses = isDragging ? "opacity-50" : "opacity-100";
+  // const draggingClasses = isDragging ? "opacity-50" : "opacity-100";
+  const clickedClasses = isInTable
+    ? "opacity-100"
+    : isClicked
+    ? "opacity-100"
+    : clickedTile
+    ? "opacity-50"
+    : "opacity-100";
 
   return (
     <div
       style={dimensions}
-      className={`${containerClasses} ${flexDirectionClass} ${interactiveClasses} ${playableBorder} ${draggingClasses}`}
+      className={`${containerClasses} ${flexDirectionClass} ${interactiveClasses} ${playableBorder}  ${clickedClasses}`}
       draggable={draggable}
       onDragStart={onDragStart}
       onClick={onClick}
     >
       <div className="w-full h-full flex items-center justify-center">
-        <Dots count={values[0]} />
+        <div
+          className={
+            orientation === "horizontal"
+              ? "rotate-90 w-full h-full"
+              : "w-full h-full"
+          }
+        >
+          <Dots count={values[0]} />
+        </div>
       </div>
 
       {/* Divisor dinámico */}
@@ -119,7 +144,15 @@ const DominoTile: React.FC<DominoTileProps> = ({
       />
 
       <div className="w-full h-full flex items-center justify-center">
-        <Dots count={values[1]} />
+        <div
+          className={
+            orientation === "horizontal"
+              ? "rotate-90 w-full h-full"
+              : "w-full h-full"
+          }
+        >
+          <Dots count={values[1]} />
+        </div>
       </div>
 
       {isDouble && (

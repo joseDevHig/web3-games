@@ -92,22 +92,16 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
     domino: Domino;
     index: number;
   } | null>(null);
+  const [isInTable, setIsInTable] = useState(false);
 
   const [isDealing, setIsDealing] = useState(false);
   const [isAutoPassing, setIsAutoPassing] = useState(false);
-  const [recentlyDrawnTile, setRecentlyDrawnTile] = useState<Domino | null>(
-    null
-  );
+
   const prevBoardLength = useRef(board.length);
 
   useEffect(() => {
     // A new round starts when the board goes from many tiles (or 0) to exactly one.
-    console.log(
-      "tamaño del tablero",
-      board.length,
-      "anterior",
-      prevBoardLength.current
-    );
+
     if (board.length === 1) {
       setIsDealing(true);
       const audio = new Audio("/repartir.ogg");
@@ -243,7 +237,7 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
       // ],
     });
 
-    let TILE_SCALE = isMobile ? 0.5 : 1;
+    let TILE_SCALE = isMobile ? 0.6 : 1;
 
     const piezasLeft = [];
     const piezasRight = [];
@@ -376,6 +370,20 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
 
     let pieces =
       placedPieces.length > 0 ? placedPieces : boardState.placedPieces;
+    if (pieces.length > 0 && clickedTile) {
+      for (let i = 0; i < pieces.length; i++) {
+
+      } 
+      // const selected = pieces.find(
+      //   (p) =>
+      //     p.piece.left === clickedTile.domino[0] &&
+      //     p.piece.right === clickedTile.domino[1]
+      // );
+
+      // if (selected) {
+      //   console.log("Encontrada:", selected);
+      // }
+    }
     let paddingDesktop = isMobile ? 0 : 16;
     const cuartoFicha = TILE_SHORT / 2;
     let widthPlayer = isMobile ? 50 : 70;
@@ -1197,14 +1205,11 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
     }
 
     onDrawTile(tile);
-    setRecentlyDrawnTile(tile);
-    setTimeout(() => setRecentlyDrawnTile(null), 500);
-    // console.log(" Ficha agregada a la mano:", tile);
   };
 
   const selectDomino = (domino: Domino, index: number) => {
     setDraggedDomino({ domino, index });
-
+    setClickedTile({ domino, index });
     const container = boardContainerRef.current;
     if (container != null) {
       setBoardDimensions({
@@ -1229,7 +1234,7 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
     domino: Domino,
     index: number
   ) => {
-    setClickedTile({ domino, index });
+    // setClickedTile({ domino, index });
     selectDomino(domino, index); // misma lógica sin usar e.dataTransfer
   };
 
@@ -1355,6 +1360,8 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
           values={[piece.left, piece.right]}
           scale={boardLayout.tileScale}
           orientation={orientation}
+          isInTable ={true}
+          clickedTile={clickedTile}
         />
       </div>
     ));
@@ -1629,6 +1636,7 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
                       : "translateY(0) scale(1)",
                     opacity: isDealing ? 0 : 1,
                     transitionDelay: isDealing ? `${index * 75}ms` : "0ms",
+
                   }}
                   onDragStart={(e) => handleDragStart(e, domino, index)}
                   onDragEnd={() => setDraggedDomino(null)}
@@ -1647,6 +1655,9 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
                       isMyTurn && !isDealing && gameState.phase === "playing"
                     }
                     isDragging={draggedDomino?.index === index}
+                    isClicked={clickedTile?.index === index}
+                    isInTable = {false}
+                    clickedTile={clickedTile}
                   />
                 </div>
               ))}
@@ -1683,6 +1694,7 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
                           scale={boardLayout.tileScale}
                           faceDown={true}
                           onClick={() => handleClicTilePool(tile)}
+                          clickedTile={clickedTile}
                         />
                       </div>
                     ))}
