@@ -1,5 +1,7 @@
 import React from 'react';
 import type { DominoVariant } from './types';
+import useDominoCategories from "@/hooks/useDominoCategories";
+import { useTranslation } from "react-i18next";
 
 interface CategoryCardProps {
   title: string;
@@ -10,6 +12,7 @@ interface CategoryCardProps {
 }
 
 const CategoryCard: React.FC<CategoryCardProps> = ({ title, description, variant, onSelect, disabled }) => {
+  const { t } = useTranslation();
   return (
     <div 
       className={`group ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'} bg-gray-800/50 rounded-lg border-2 border-amber-500/40 p-6 shadow-xl backdrop-blur-sm transition-all duration-300 ${!disabled && 'hover:border-amber-400 hover:shadow-2xl hover:shadow-amber-400/20 transform hover:-translate-y-2'}`}
@@ -22,7 +25,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ title, description, variant
           disabled={disabled}
           className="mt-6 w-full font-display bg-green-700/80 group-hover:bg-green-600/90 text-amber-200 font-bold py-2 px-4 rounded-md shadow-md transition-all duration-300 disabled:bg-gray-600/50 disabled:text-gray-400 disabled:cursor-not-allowed"
         >
-          {disabled ? 'Coming Soon' : 'Select'}
+          {disabled ? t('comingSoon') : t('select')}
         </button>
       </div>
     </div>
@@ -35,34 +38,13 @@ interface DominoCategorySelectionProps {
 }
 
 const DominoCategorySelection: React.FC<DominoCategorySelectionProps> = ({ onSelectVariant }) => {
-  const categories = [
-    {
-      variant: 'internacional' as DominoVariant,
-      title: 'Internacional',
-      description: 'The classic game. Play to 100 or 150 points with standard rules. The player with the highest double (or heaviest tile) starts the game.'
-    },
-    {
-      variant: 'cubano' as DominoVariant,
-      title: 'Cubano',
-      description: 'A strategic pairs game played to 150 points. Popular in Cuba, it focuses on teamwork and counting tiles. Highest double doesn\'t guarantee the start.'
-    },
-    {
-      variant: 'dominicano' as DominoVariant,
-      title: 'Dominicano',
-      description: 'A fast-paced and competitive version from the Dominican Republic, played to 200 points. The double-six always starts the first round.'
-    },
-    {
-      variant: 'mexicano' as DominoVariant,
-      title: 'Mexicano',
-      description: 'Also known as Mexican Train. A popular social variant where players build their own "trains" off a central hub. (This mode is not yet available).',
-      disabled: true
-    }
-  ];
+  const { t } = useTranslation();
 
+const categories = useDominoCategories();
   return (
     <div className="py-12">
       <h2 className="font-display text-4xl md:text-5xl font-bold text-center text-amber-300 mb-12 drop-shadow-[0_1px_1px_rgba(0,0,0,0.7)]">
-        Choose a Game Style
+        {t('chooseGameStyle')}
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         {categories.map((cat) => (

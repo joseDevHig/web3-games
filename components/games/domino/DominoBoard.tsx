@@ -370,20 +370,7 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
 
     let pieces =
       placedPieces.length > 0 ? placedPieces : boardState.placedPieces;
-    if (pieces.length > 0 && clickedTile) {
-      for (let i = 0; i < pieces.length; i++) {
 
-      } 
-      // const selected = pieces.find(
-      //   (p) =>
-      //     p.piece.left === clickedTile.domino[0] &&
-      //     p.piece.right === clickedTile.domino[1]
-      // );
-
-      // if (selected) {
-      //   console.log("Encontrada:", selected);
-      // }
-    }
     let paddingDesktop = isMobile ? 0 : 16;
     const cuartoFicha = TILE_SHORT / 2;
     let widthPlayer = isMobile ? 50 : 70;
@@ -1200,7 +1187,6 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
 
   const handleClicTilePool = (tile: Domino) => {
     if (playableMoves.size > 0) {
-      // console.log("🚫 No puedes tomar ficha, aún tienes jugadas posibles.");
       return;
     }
 
@@ -1208,6 +1194,15 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
   };
 
   const selectDomino = (domino: Domino, index: number) => {
+    if (
+      clickedTile &&
+      clickedTile.index === index &&
+      clickedTile.domino === domino
+    ) {
+      setDraggedDomino(null);
+      setClickedTile(null);
+      return;
+    }
     setDraggedDomino({ domino, index });
     setClickedTile({ domino, index });
     const container = boardContainerRef.current;
@@ -1224,7 +1219,10 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
     domino: Domino,
     index: number
   ) => {
-    selectDomino(domino, index);
+    if (!clickedTile || clickedTile.index !== index) {
+      selectDomino(domino, index);
+    }
+
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", JSON.stringify({ domino, index }));
   };
@@ -1234,8 +1232,7 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
     domino: Domino,
     index: number
   ) => {
-    // setClickedTile({ domino, index });
-    selectDomino(domino, index); // misma lógica sin usar e.dataTransfer
+    selectDomino(domino, index);
   };
 
   const handleDrop = useCallback(
@@ -1252,6 +1249,8 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
 
         if (boardLogic.isPlayable(piece, isHead)) {
           onPlayDomino(draggedDomino.domino, draggedDomino.index, end);
+          const audio = new Audio("/place.ogg");
+          audio.play().catch((e) => console.error("Error playing sound:", e));
         }
       } catch (error) {
         console.error("Invalid move:", error);
@@ -1299,39 +1298,111 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
         }`}
       >
         <div
-          className={`${
-            info.position === "top"
-              ? `${
-                  info.player.isAI ? "w-[200px] h-[50px]" : "w-[300px] h-[50px]"
-                }`
-              : `${isMobile ? "w-[50px] h-[200px]" : "w-[70px] h-[200px]"}`
-          }  flex items-center justify-center gap-2 px-2 py-1 sm:px-3 sm:py-2 
-           backdrop-blur-sm rounded-xl shadow-lg border ${
-             isCurrent ? "border-amber-500/80" : "border-white/20"
-           } text-white 
-          ${
-            info.position === "left" || info.position === "right"
-              ? "flex-col text-center"
-              : "flex-row text-start"
-          }`}
+          className={`
+    ${
+      info.position === "top"
+        ? `h-[50px] w-auto max-w-[60vw]`
+        : `${isMobile ? "w-[50px]" : "w-[70px]"} h-auto max-h-[90vh]`
+    }
+    flex items-center justify-between gap-2 px-2 py-1 sm:px-3 sm:py-2 
+    backdrop-blur-sm rounded-xl shadow-lg border 
+    ${isCurrent ? "border-amber-500/80" : "border-white/20"} text-white 
+    ${
+      info.position === "left" || info.position === "right"
+        ? "flex-col text-center"
+        : "flex-row text-start"
+    }
+    overflow-hidden
+  `}
         >
-          <div className="w-8 h-10 bg-white rounded-lg shadow-md border-2 border-gray-300 flex items-center justify-center text-[clamp(1rem,2.5vw,1.5rem)] font-bold text-black">
-            {info.handSize}
+          <div className="text-xl sm:text-2xl flex-shrink-0">{emoji}</div>
+
+          <div
+            className={`flex ${
+              info.position === "left" || info.position === "right"
+                ? "flex-col items-center justify-center"
+                : "flex-row items-center justify-center"
+            } flex-shrink-0`}
+            style={{ perspective: "600px", transformStyle: "preserve-3d" }}
+          >
+            {Array.from({ length: info.handSize }).map((_, i) => {
+              const count = info.handSize;
+              const isFirst = i === 0;
+
+              let overlap = Math.max(6, 20 - count);
+              if (info.position === "left" || info.position === "right") {
+                overlap = Math.max(6, 40 - count);
+              }
+              const zStep = Math.max(2, 10 - Math.floor(count / 4));
+              const angleBase = -Math.min(12, count);
+              const angleStep = Math.max(1, 5 - Math.floor(count / 6));
+
+              const zIndex = i + 1;
+
+              let transform = "";
+              if (info.position === "top") {
+                const rotateY = `${angleBase + i * angleStep}deg`;
+                const translateZ = `${i * zStep}px`;
+                transform = `translateZ(${translateZ}) rotateY(${rotateY})`;
+              } else {
+                const rotateX = `${angleBase + i * angleStep}deg`;
+                const translateZ = `${i * zStep}px`;
+                transform = `translateZ(${translateZ}) rotateX(${rotateX}) rotate(90deg)`;
+              }
+
+              return (
+                <div
+                  key={i}
+                  style={{
+                    marginLeft:
+                      info.position === "top"
+                        ? isFirst
+                          ? 0
+                          : `-${overlap}px`
+                        : 0,
+                    marginTop:
+                      info.position === "left" || info.position === "right"
+                        ? isFirst
+                          ? 0
+                          : `-${overlap}px`
+                        : 0,
+                    zIndex,
+                    transform,
+                    transformOrigin: "center",
+                    transition: "transform 160ms ease, margin 160ms ease",
+                    boxShadow: "0 6px 12px rgba(0,0,0,0.18)",
+                    borderRadius: 10,
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
+                    overflow: "visible",
+                  }}
+                >
+                  <DominoTile
+                    values={[0, 0]}
+                    scale={0.5}
+                    faceDown={true}
+                    onClick={() => {}}
+                    clickedTile={clickedTile}
+                    isClickable={false}
+                    isPlayable={false}
+                  />
+                </div>
+              );
+            })}
           </div>
 
-          <div className="text-xl sm:text-2xl">{emoji}</div>
-
-          <div className="flex flex-col">
-            <div className="text-xs sm:text-sm font-medium max-w-[80px] sm:max-w-[100px] truncate">
-              {info.player.isAI ? "" : info.player.address}
+          <div className="flex flex-col min-w-0 flex-1">
+            <div className="text-xs sm:text-sm font-medium">
+              {info.player.isAI ? "AI" : info.player.address.slice(0, 5)}
             </div>
             <div className="text-[0.6rem] text-emerald-300 mt-0.5">
               Points: {score}
             </div>
           </div>
 
+          {/* Timer */}
           {isCurrent && gameState.phase === "playing" && (
-            <div className="ml-2">
+            <div className="ml-2 flex-shrink-0">
               <p className="text-xs font-mono text-amber-300 animate-pulse">
                 {turnTimer}s
               </p>
@@ -1360,7 +1431,7 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
           values={[piece.left, piece.right]}
           scale={boardLayout.tileScale}
           orientation={orientation}
-          isInTable ={true}
+          isInTable={true}
           clickedTile={clickedTile}
         />
       </div>
@@ -1479,8 +1550,6 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
 
         {/* Game Board */}
         <div ref={boardContainerRef} className="absolute inset-0 w-full h-full">
-          {/* <div className="absolute left-1/2 top-0 h-full w-px bg-red-500 transform -translate-x-1/2 pointer-events-none" />
-          <div className="absolute top-1/2 left-0 w-full h-px bg-red-500 transform -translate-y-1/2 pointer-events-none" /> */}
           {renderBoard()}
 
           {board.length > 0 &&
@@ -1608,24 +1677,24 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
 
       {/* Player Hand & Info Area */}
       <div
-        className={`w-full ${
-          isMobile ? "h-20 " : "h-28"
-        }  bg-black/50 pt-0 pb-2 px-1 sm:px-4 rounded-t-lg flex flex-col items-bottom z-20 shrink-0 overflow-visible`}
+        className={`w-full ${isMobile ? "h-20 " : "h-28"} 
+        ${isMyTurn ? "border-4 border-amber-500/80" : "border border-white/20"}
+        bg-black/50 pt-0 pb-2 px-1 sm:px-4 rounded-t-lg flex flex-col items-bottom z-20 shrink-0 overflow-visible no-scrollbar`}
       >
         {/* Tiles container */}
 
         <div
           className={`flex justify-center items-end space-x-1 ${
             isMobile ? "h-24" : "h-32"
-          } w-full overflow-x-auto overflow-visible p-2 -mt-6 relative z-30`}
+          } w-full overflow-x-auto overflow-visible p-2 -mt-6 relative z-30 no-scrollbar`}
         >
           <div className="flex-shrink-0 text-center pr-2 sm:pr-4 mr-1 sm:mr-2">
             <p>Points:</p>
             <p>{myScore}</p>
           </div>
 
-          <div className="flex-1 overflow-x-auto px-1">
-            <div className="inline-flex justify-center space-x-1 w-full">
+          <div className="flex-1 overflow-x-auto px-1 no-scrollbar">
+            <div className="inline-flex justify-center space-x-1 w-full no-scrollbar z-40">
               {playerHand.map((domino, index) => (
                 <div
                   key={index}
@@ -1636,16 +1705,24 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
                       : "translateY(0) scale(1)",
                     opacity: isDealing ? 0 : 1,
                     transitionDelay: isDealing ? `${index * 75}ms` : "0ms",
-
                   }}
                   onDragStart={(e) => handleDragStart(e, domino, index)}
-                  onDragEnd={() => setDraggedDomino(null)}
+                  onDragEnd={() => {
+                    if (draggedDomino) {
+                      setDraggedDomino(null);
+                      setClickedTile(null);
+                    }
+                  }}
                   onClick={(e) => handleTileClick(e, domino, index)}
                 >
                   <DominoTile
                     values={domino}
                     scale={boardLayout.tileScale}
-                    isClickable={isMyTurn && gameState.phase === "playing"}
+                    isClickable={
+                      isMyTurn &&
+                      gameState.phase === "playing" &&
+                      playableMoves.has(JSON.stringify(domino))
+                    }
                     isPlayable={
                       isMyTurn &&
                       playableMoves.has(JSON.stringify(domino)) &&
@@ -1654,9 +1731,12 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
                     draggable={
                       isMyTurn && !isDealing && gameState.phase === "playing"
                     }
-                    isDragging={draggedDomino?.index === index}
+                    isDragging={
+                      draggedDomino?.index === index ||
+                      clickedTile?.index === index
+                    }
                     isClicked={clickedTile?.index === index}
-                    isInTable = {false}
+                    isInTable={false}
                     clickedTile={clickedTile}
                   />
                 </div>
@@ -1684,22 +1764,29 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="absolute bottom-28 left-0 right-0 flex justify-center z-40">
-                <div className="flex overflow-x-auto space-x-2 px-4">
-                  {boneyard &&
-                    boneyard.map((tile, index) => (
-                      <div key={index} className="flex-shrink-0">
-                        <DominoTile
-                          values={tile}
-                          scale={boardLayout.tileScale}
-                          faceDown={true}
-                          onClick={() => handleClicTilePool(tile)}
-                          clickedTile={clickedTile}
-                        />
-                      </div>
-                    ))}
+              <>
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-30 pointer-events-auto" />
+
+                <div className="absolute bottom-28 left-0 right-0 flex justify-center z-40">
+                  <div className="flex overflow-x-auto space-x-2 px-4 no-scrollbar">
+                    {boneyard &&
+                      boneyard.map((tile, index) => (
+                        <div key={index} className="flex-shrink-0">
+                          <DominoTile
+                            values={tile}
+                            scale={boardLayout.tileScale}
+                            faceDown={true}
+                            onClick={() => handleClicTilePool(tile)}
+                            clickedTile={clickedTile}
+                            isClickable={
+                              isMyTurn && gameState.phase === "playing"
+                            }
+                          />
+                        </div>
+                      ))}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </>
         )}

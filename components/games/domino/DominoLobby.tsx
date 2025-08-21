@@ -5,6 +5,7 @@ import type { Room, DominoVariant, RoomMode, Match } from "./types";
 import { defaultCashRoomData } from "../../../data/defaultRooms";
 import CreateRoomModal from "./CreateRoomModal";
 import JoinWithCodeModal from "./JoinWithCodeModal";
+import { useTranslation } from "react-i18next";
 
 // Declare firebase for global script
 declare const firebase: any;
@@ -200,6 +201,7 @@ const DominoLobby: React.FC<
     free: [],
     ai: { "1v1": [], "2v2": [], free: [] },
   });
+  const { t } = useTranslation();
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [isJoinModalOpen, setJoinModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -389,7 +391,7 @@ const DominoLobby: React.FC<
   const renderRoomList = (rooms: Room[]) => {
     if (isLoading) {
       return (
-        <div className="text-center text-gray-300 py-8">Loading rooms...</div>
+        <div className="text-center text-gray-300 py-8">{t("loadingRooms")}</div>
       );
     }
     if (rooms.length > 0) {
@@ -409,7 +411,7 @@ const DominoLobby: React.FC<
     }
     return (
       <div className="text-center text-gray-400 py-8">
-        No public rooms available for this game mode.
+        {t("noRoomsAvailable")}
       </div>
     );
   };
@@ -440,13 +442,13 @@ const DominoLobby: React.FC<
           onClick={() => setCreateModalOpen(true)}
           className="font-display bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-lg text-lg transition-all duration-300 shadow-lg hover:shadow-blue-500/40 transform hover:scale-105"
         >
-          Create Room
+          {t("createRoom")}
         </button>
         <button
           onClick={() => setJoinModalOpen(true)}
           className="font-display bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-lg text-lg transition-all duration-300 shadow-lg hover:shadow-gray-500/40"
         >
-          Join with Code
+          {t("joinWithCode")}
         </button>
       </div>
 
@@ -463,7 +465,7 @@ const DominoLobby: React.FC<
             onClick={() => setActiveTab("2v2")}
           />
           <TabButton
-            label="Libre"
+            label={t("freeMode")}
             isActive={activeTab === "free"}
             onClick={() => setActiveTab("free")}
           />
@@ -475,7 +477,7 @@ const DominoLobby: React.FC<
         </div>
         <div className="p-3 sm:p-6">
           <h3 className="font-display text-2xl sm:text-3xl text-amber-300 drop-shadow-[0_1px_1px_rgba(0,0,0,0.9)] mb-4 sm:mb-6">
-            {activeTab === "ai" ? "IA Rooms" : "Public Cash Rooms"}
+            {activeTab === "ai" ? t("SingleplayerMode") : t("MultiplayerMode")}
           </h3>
 
           {activeTab === "ai" && (

@@ -1,0 +1,30 @@
+{
+  "title": "The Casino",
+  "subtitle": "Connect your wallet to enter the lobby.",
+  "connecting": "Connecting...",
+  "connectWallet": "Connect Wallet",
+  "classicDomino": "Classic Domino",
+  "dominoGameDescription": "Match tiles with the same number of pips. The first to empty their hand wins...",
+  "chooseGameStyle": "Choose a Game Style",
+  "select": "Select",
+  "comingSoon": "Coming Soon",
+  "playNow": "Play Now",
+  "variants": {
+    "internacional": {
+      "title": "International",
+      "description": "The classic game. Play to 100 or 150 points with standard rules. The player with the highest double (or heaviest tile) starts the game."
+    },
+    "cubano": {
+      "title": "Cuban",
+      "description": "A strategic pairs game played to 150 points. Popular in Cuba, it focuses on teamwork and counting tiles. Highest double doesn’t guarantee the start."
+    },
+    "dominicano": {
+      "title": "Dominican",
+      "description": "A fast-paced and competitive version from the Dominican Republic, played to 200 points. The double-six always starts the first round."
+    },
+    "mexicano": {
+      "title": "Mexican",
+      "description": "Also known as Mexican Train. A popular social variant where players build their own 'trains' off a central hub. (This mode is not yet available)."
+    }
+  }
+}

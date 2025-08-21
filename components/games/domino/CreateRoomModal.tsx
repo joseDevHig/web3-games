@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import type { Room, DominoVariant, RoomMode } from './types';
 import { BnbIcon } from '../../icons/BnbIcon';
 import { UsdtIcon } from '../../icons/UsdtIcon';
+import { useTranslation } from 'react-i18next';
 
 interface CreateRoomModalProps {
   onClose: () => void;
@@ -36,6 +37,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ onClose, onCreate, va
   const [error, setError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [createdRoomInfo, setCreatedRoomInfo] = useState<{ name: string; code: string } | null>(null);
+  const { t } = useTranslation();
 
   const handleCopyToClipboard = () => {
     if (createdRoomInfo) {
@@ -104,34 +106,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ onClose, onCreate, va
     }
   };
 
-  // if (createdRoomInfo) {
-  //   return (
-  //     <div 
-  //       className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center"
-  //       aria-modal="true"
-  //       role="dialog"
-  //     >
-  //       <div className="bg-gray-800 border-2 border-green-500/50 rounded-lg shadow-2xl shadow-green-500/10 w-full max-w-md m-4 text-center p-8">
-  //           <h3 className="font-display text-2xl text-green-300">Private Room Created!</h3>
-  //           <p className="text-gray-300 mt-2">Your room <span className="font-bold text-white">{createdRoomInfo.name}</span> is ready.</p>
-  //           <p className="text-gray-300 mt-4">Share this code with your friends:</p>
-
-  //           <div className="my-4 p-4 bg-gray-900/70 border-2 border-dashed border-amber-400 rounded-lg">
-  //               <p className="font-mono text-4xl tracking-widest text-amber-300">{createdRoomInfo.code}</p>
-  //           </div>
-            
-  //           <div className="flex justify-center space-x-4">
-  //                <button onClick={handleCopyToClipboard} className="font-display bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-6 rounded-lg transition-colors">
-  //                   Copy Code
-  //               </button>
-  //               <button onClick={onClose} className="font-display bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg transition-colors">
-  //                   Close
-  //               </button>
-  //           </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+ 
 
   return (
     <div 
@@ -141,35 +116,35 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ onClose, onCreate, va
     >
       <div className="bg-gray-800 border-2 border-amber-500/50 rounded-lg shadow-2xl shadow-amber-500/10 w-full max-w-md flex flex-col max-h-[90vh]">
         <div className="p-6 border-b border-amber-500/20 flex justify-between items-center flex-shrink-0">
-          <h3 className="font-display text-2xl text-amber-300">Create New Room</h3>
+          <h3 className="font-display text-2xl text-amber-300">{t('createNewRoom')}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-white disabled:text-gray-600" disabled={isCreating}>&times;</button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
           
           <div>
-            <label className="block font-bold text-sm text-gray-300 mb-2">Room Privacy</label>
+            <label className="block font-bold text-sm text-gray-300 mb-2">{t('privacityRoom')}</label>
              <div className="flex space-x-4">
                 <button type="button" onClick={() => setPrivacy('public')} className={`flex-1 p-3 rounded-md font-bold border-2 transition-colors ${privacy === 'public' ? 'bg-green-500/20 border-green-500 text-white' : 'bg-gray-700/50 border-gray-600 text-gray-400 hover:bg-gray-700'}`}>
-                    Public
+                    {t('publicRoom')}
                 </button>
                 <button type="button" onClick={() => setPrivacy('private')} className={`flex-1 p-3 rounded-md font-bold border-2 transition-colors ${privacy === 'private' ? 'bg-indigo-500/20 border-indigo-500 text-white' : 'bg-gray-700/50 border-gray-600 text-gray-400 hover:bg-gray-700'}`}>
-                    Private
+                    {t('privateRoom')}
                 </button>
             </div>
-             <p className="text-xs text-gray-400 mt-2">{privacy === 'public' ? 'Your room will be visible to everyone in the lobby.' : 'Your room will be hidden and only accessible via a code.'}</p>
+             <p className="text-xs text-gray-400 mt-2">{privacy === 'public' ? t('publicRoomDescription') : t('privateRoomDescription')}</p>
           </div>
 
           <div>
-            <label className="block font-bold text-sm text-gray-300 mb-2">Game Mode</label>
+            <label className="block font-bold text-sm text-gray-300 mb-2">{t('gameMode')}</label>
             <div className="flex space-x-2">
-                <RoomModeButton label="1v1" description="2 Players" isActive={mode === '1v1'} onClick={() => setMode('1v1')} />
-                <RoomModeButton label="2v2" description="4 Players" isActive={mode === '2v2'} onClick={() => setMode('2v2')} />
-                <RoomModeButton label="Libre" description="2-4 Players" isActive={mode === 'free'} onClick={() => setMode('free')} />
+                <RoomModeButton label="1v1" description={"2 " + t('players')} isActive={mode === '1v1'} onClick={() => setMode('1v1')} />
+                <RoomModeButton label="2v2" description={"4 " + t('players')} isActive={mode === '2v2'} onClick={() => setMode('2v2')} />
+                <RoomModeButton label={t('freeMode')} description={"2-4" + t('players')} isActive={mode === 'free'} onClick={() => setMode('free')} />
             </div>
           </div>
           
           <div>
-            <label htmlFor="room-name" className="block font-bold text-sm text-gray-300 mb-2">Room Name</label>
+            <label htmlFor="room-name" className="block font-bold text-sm text-gray-300 mb-2">{t('roomName')}</label>
             <input
               type="text"
               id="room-name"
@@ -182,10 +157,10 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ onClose, onCreate, va
           </div>
 
           <div className="p-4 bg-gray-900/50 rounded-md border border-gray-700">
-            <p className="font-bold text-sm text-gray-300 mb-2">Game Type: <span className="text-amber-300 capitalize">Cash Play ({variant})</span></p>
+            <p className="font-bold text-sm text-gray-300 mb-2">{t('gameType')}: <span className="text-amber-300 capitalize">{t("cashPlay")} ({variant})</span></p>
             <div className="flex space-x-4">
                 <div className="flex-1">
-                    <label htmlFor="bet-amount" className="block font-bold text-xs text-gray-400 mb-1">Bet Amount</label>
+                    <label htmlFor="bet-amount" className="block font-bold text-xs text-gray-400 mb-1">{t('betAmount')}</label>
                     <input
                       type="number"
                       id="bet-amount"
@@ -197,7 +172,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ onClose, onCreate, va
                     />
                 </div>
                  <div className="flex-1">
-                    <label htmlFor="score-to-win" className="block font-bold text-xs text-gray-400 mb-1">Score to Win</label>
+                    <label htmlFor="score-to-win" className="block font-bold text-xs text-gray-400 mb-1">{t('scoreToWin')}</label>
                     <input
                       type="number"
                       id="score-to-win"
@@ -211,7 +186,7 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ onClose, onCreate, va
                 </div>
             </div>
             <div className="mt-4">
-                <label className="block font-bold text-xs text-gray-400 mb-1">Currency</label>
+                <label className="block font-bold text-xs text-gray-400 mb-1">{t('currency')}</label>
                 <div className="flex space-x-4">
                     <button type="button" onClick={() => setCurrency('USDT')} className={`flex-1 p-3 rounded-md flex items-center justify-center space-x-2 font-bold border-2 transition-colors ${currency === 'USDT' ? 'bg-green-500/20 border-green-500 text-white' : 'bg-gray-700/50 border-gray-600 text-gray-400 hover:bg-gray-700'}`}>
                         <UsdtIcon className="w-5 h-5"/> <span>USDT</span>
@@ -227,10 +202,10 @@ const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ onClose, onCreate, va
           
           <div className="flex justify-end space-x-4 pt-2">
             <button type="button" onClick={onClose} className="font-display bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg transition-colors disabled:opacity-50" disabled={isCreating}>
-              Cancel
+              {t('cancel')}
             </button>
             <button type="submit" className="font-display bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-lg transition-colors disabled:bg-green-800 disabled:cursor-wait" disabled={isCreating}>
-              {isCreating ? 'Creating...' : 'Create Room'}
+              {isCreating ? t('creatingRoom') : t('createRoom')}
             </button>
           </div>
         </form>

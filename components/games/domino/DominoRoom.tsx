@@ -22,9 +22,9 @@ import { FiCopy } from "react-icons/fi";
 type Database = any;
 
 // --- GAME CONSTANTS ---
-const TURN_DURATION = 3606; // seconds
+const TURN_DURATION = 3600; // seconds
 const AI_THINK_TIME = 1500; // ms
-const HAND_SIZE = 5;
+const HAND_SIZE = 7;
 const MATCHMAKING_TIMEOUT = 30; // seconds
 const NEW_ROUND_DELAY = 5000; // 5 seconds
 const TREASURY_WALLET = "0x7236A11cFB10f002f60823C12AC6f616A7Ccd4e9";
@@ -73,23 +73,14 @@ const setupNewRound = (
   const teams: Record<string, string> = {};
   const teamScores: Record<string, number> = existingScores || {};
 
-  if ((mode === "1v1" || mode === "free") && numPlayers === 2) {
+  if (mode === "1v1" && numPlayers === 2) {
     teams[sortedPlayers[0].id] = "A";
     teams[sortedPlayers[1].id] = "B";
     if (!existingScores) {
       teamScores["A"] = 0;
       teamScores["B"] = 0;
     }
-  } else if (mode === "free" && numPlayers === 3) {
-    teams[sortedPlayers[0].id] = "A";
-    teams[sortedPlayers[1].id] = "B";
-    teams[sortedPlayers[2].id] = "C";
-    if (!existingScores) {
-      teamScores["A"] = 0;
-      teamScores["B"] = 0;
-      teamScores["C"] = 0;
-    }
-  } else if ((mode === "2v2" || mode === "free") && numPlayers === 4) {
+  } else if (mode === "2v2" && numPlayers === 4) {
     teams[sortedPlayers[0].id] = "A";
     teams[sortedPlayers[1].id] = "B";
     teams[sortedPlayers[2].id] = "A";
@@ -98,6 +89,14 @@ const setupNewRound = (
       teamScores["A"] = 0;
       teamScores["B"] = 0;
     }
+  } else if (mode === "free") {
+    sortedPlayers.forEach((p, idx) => {
+      const teamId = p.id;
+      teams[p.id] = teamId;
+      if (!existingScores) {
+        teamScores[teamId] = 0;
+      }
+    });
   }
 
   sortedPlayers.forEach((p) => {
@@ -661,12 +660,12 @@ const DominoRoom: React.FC<
       };
       players = [humanPlayer, aiPlayer1, aiPlayer2, aiPlayer3];
     } else if (room!.mode === "free") {
-      // Puedes decidir cuántos jugadores IA según lo que quieras soportar (ejemplo: 3 jugadores)
+      // 👤 Humano + 🤖 3 IAs (todos contra todos)
       const aiPlayer1: Player = {
         id: "AI_1",
         address: "AI Opponent 1",
         isAI: true,
-        team: "B",
+        team: "B", 
       };
       const aiPlayer2: Player = {
         id: "AI_2",
@@ -674,7 +673,13 @@ const DominoRoom: React.FC<
         isAI: true,
         team: "C",
       };
-      players = [humanPlayer, aiPlayer1, aiPlayer2];
+      const aiPlayer3: Player = {
+        id: "AI_3",
+        address: "AI Opponent 3",
+        isAI: true,
+        team: "D",
+      };
+      players = [humanPlayer, aiPlayer1, aiPlayer2, aiPlayer3];
     }
 
     const {
@@ -861,6 +866,8 @@ const DominoRoom: React.FC<
           bestMove.end,
           currentPlayer.id
         );
+        const audio = new Audio("/place.ogg");
+        audio.play().catch((e) => console.error("Error playing sound:", e));
       } else {
         const boneyard = matchState.boneyard ?? [];
         if (boneyard.length > 0) {

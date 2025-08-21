@@ -19,14 +19,21 @@ interface DominoTileProps {
   clickedTile: {
     domino: Domino;
     index: number;
-} | null
+  } | null;
 }
 
-const Dot: React.FC = () => (
-  <div className="w-full h-full bg-gray-800 rounded-full dot-inset-shadow"></div>
-);
+const Dot: React.FC<{ scale: number }> = ({ scale }) => {
+  const size = Math.min(90, 50 + scale * 10);
 
-const Dots: React.FC<{ count: number }> = ({ count }) => {
+  return (
+    <div
+      className="bg-gray-800 rounded-full dot-inset-shadow"
+      style={{ width: `${size}%`, height: `${size}%` }}
+    />
+  );
+};
+
+const Dots: React.FC<{ count: number; scale: number }> = ({ count, scale }) => {
   const dotVisibility: { [key: number]: number[] } = {
     1: [4],
     2: [0, 8],
@@ -41,8 +48,8 @@ const Dots: React.FC<{ count: number }> = ({ count }) => {
   return (
     <div className="w-full h-full p-1 grid grid-cols-3 grid-rows-3 gap-px">
       {Array.from({ length: 9 }).map((_, i) => (
-        <div key={i} className="flex justify-center items-center p-px">
-          {dotsToShow.includes(i) && <Dot />}
+        <div key={i} className="flex justify-center items-center">
+          {dotsToShow.includes(i) && <Dot scale={scale} />}
         </div>
       ))}
     </div>
@@ -57,7 +64,6 @@ const DominoTile: React.FC<DominoTileProps> = ({
   draggable,
   onDragStart,
   onClick,
-  isDragging,
   isClicked,
   faceDown,
   orientation = "vertical", // Orientación visual por defecto
@@ -85,12 +91,12 @@ const DominoTile: React.FC<DominoTileProps> = ({
     return (
       <div
         style={dimensions}
-        className="bg-white rounded-lg domino-tile-3d-shadow flex items-center justify-center overflow-hidden m-2 cursor-pointer"
+        className={`bg-white rounded-lg border border-black flex items-center justify-center overflow-hidden m-[2px] ${
+          isClickable ? "cursor-pointer" : "cursor-default"
+        }`}
         onClick={onClick}
       >
-        <div className="w-full h-full bg-white/80 flex items-center justify-center">
-          <div className="w-1/2 h-1/2 rounded-full bg-gray-300 shadow-inner"></div>
-        </div>
+        <div className="w-full h-full bg-white/80 flex items-center justify-center"></div>
       </div>
     );
   }
@@ -102,7 +108,7 @@ const DominoTile: React.FC<DominoTileProps> = ({
     ? "cursor-pointer transition-transform hover:scale-105 hover:-translate-y-1 overflow-visible"
     : "cursor-default";
   const playableBorder = isPlayable
-    ? "shadow-[0_0_0_2px_rgba(251,191,36,0.8)]" // Borde amarillo para jugable
+    ? "shadow-[0_0_0_2px_rgba(251,191,36,0.8)]"
     : "";
 
   // const draggingClasses = isDragging ? "opacity-50" : "opacity-100";
@@ -130,7 +136,7 @@ const DominoTile: React.FC<DominoTileProps> = ({
               : "w-full h-full"
           }
         >
-          <Dots count={values[0]} />
+          <Dots count={values[0]} scale={scale} />
         </div>
       </div>
 
@@ -151,7 +157,7 @@ const DominoTile: React.FC<DominoTileProps> = ({
               : "w-full h-full"
           }
         >
-          <Dots count={values[1]} />
+          <Dots count={values[1]} scale={scale} />
         </div>
       </div>
 

@@ -5,6 +5,9 @@ import { useWeb3 } from "./hooks/useWeb3";
 import { GAMES } from "./constants";
 import DominoGame from "./components/games/DominoGame";
 import { ConfirmModal } from "./components/Modal";
+import { useTranslation } from "react-i18next";
+import "./src/i18n/i18n";
+import LanguageSelector from "./components/LanguageSelector";
 
 declare const firebase: any;
 
@@ -41,7 +44,7 @@ const App: React.FC = () => {
     nativeCurrencySymbol,
     availableNetworks,
   } = useWeb3();
-
+  const { t, i18n } = useTranslation();
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
 
@@ -59,7 +62,6 @@ const App: React.FC = () => {
     "home"
   );
 
-  console.log("Current screen:", currentScreen);
 
   // Firebase
   const database = useMemo(() => {
@@ -132,34 +134,61 @@ const App: React.FC = () => {
   };
 
   const handleCancelReconnect = async () => {
-    try {
-      if (pendingReconnectMatch && address) {
-        const desertersRef = database.ref(
-          `matches/${pendingReconnectMatch}/desertorsAddress`
-        );
+  try {
+    if (pendingReconnectMatch && address && database) {
+      const matchRef = database.ref(`matches/${pendingReconnectMatch}`);
+      const snapshot = await matchRef.once("value");
 
-        await desertersRef.transaction((current: string | string[]) => {
-          if (current) {
-            if (!Array.isArray(current)) {
-              return [address];
+      if (!snapshot.exists()) {
+        console.log("No existe un match con ese ID");
+      } else {
+        const matchData = snapshot.val();
+        const playersCount = Object.keys(matchData.players || {}).length;
+
+        // ✅ Si la match está en fase waiting y solo hay un jugador, eliminar match y room
+        if (matchData.gameState?.phase === "waiting" && playersCount < 2) {
+          const updates: Record<string, null> = {
+            [`matches/${pendingReconnectMatch}`]: null,
+          };
+
+          if (matchData.roomTemplateId) {
+            const roomSnap = await database
+              .ref(`rooms/${matchData.roomTemplateId}`)
+              .once("value");
+
+            if (roomSnap.exists() && roomSnap.val()?.createdBy === "user") {
+              updates[`rooms/${matchData.roomTemplateId}`] = null;
             }
-            if (!current.includes(address)) {
-              return [...current, address];
-            }
-            return current;
           }
-          return [address];
-        });
-      }
-    } catch (error) {
-      console.error("Error adding deserter address:", error);
-    }
 
-    setPendingReconnectMatch(null);
-    setPendingReconnectGame(null);
-    setShowReconnectModal(false);
-    setInGame(false);
-  };
+          await database.ref().update(updates);
+          console.log(
+            "Match eliminada y room asociada (si era creada por usuario)"
+          );
+        } else {
+          // Si no cumple las condiciones, solo agregar como desertor
+          const desertersRef = matchRef.child("desertorsAddress");
+          await desertersRef.transaction((current: string | string[]) => {
+            if (current) {
+              if (!Array.isArray(current)) return [address];
+              if (!current.includes(address)) return [...current, address];
+              return current;
+            }
+            return [address];
+          });
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error en handleCancelReconnect:", error);
+  }
+
+  setPendingReconnectMatch(null);
+  setPendingReconnectGame(null);
+  setShowReconnectModal(false);
+  setInGame(false);
+};
+
 
   // Control del botón atrás
   const handleGoToLobby = () => setSelectedGame(null);
@@ -254,18 +283,22 @@ const App: React.FC = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full w-full p-4 text-center overflow-y-auto">
+            <div className="absolute top-4 right-4">
+              <LanguageSelector />
+            </div>
+
             <h1 className="font-display text-5xl sm:text-7xl md:text-8xl font-bold text-amber-300 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
-              The Casino
+              {t("title")}
             </h1>
             <p className="mt-4 mb-12 text-gray-300 text-base sm:text-lg">
-              Connect your wallet to enter the lobby.
+              {t("subtitle")}
             </p>
             <button
               onClick={connectWallet}
               disabled={isConnecting}
               className="font-display bg-amber-400 hover:bg-amber-300 disabled:bg-amber-600 disabled:cursor-not-allowed text-gray-900 font-bold py-3 px-8 sm:py-4 sm:px-12 rounded-lg text-xl sm:text-2xl shadow-lg shadow-amber-400/20 hover:shadow-amber-300/40 transition-all duration-300 transform hover:scale-105"
             >
-              {isConnecting ? "Connecting..." : "Connect Wallet"}
+              {isConnecting ? t("connecting") : t("connectWallet")}
             </button>
           </div>
         )}

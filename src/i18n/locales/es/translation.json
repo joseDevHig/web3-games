@@ -1,0 +1,63 @@
+{
+  "title": "El Casino",
+  "subtitle": "Conecta tu billetera para entrar al lobby.",
+  "connecting": "Conectando...",
+  "connectWallet": "Conectar Billetera",
+  "classicDomino": "Domino Clásico",
+  "dominoGameDescription": "Empareja fichas con el mismo número de puntos. El primero en vaciar su mano gana...",
+  "chooseGameStyle": "Elige un estilo de juego",
+  "select": "Seleccionar",
+  "comingSoon": "Próximamente",
+  "playNow": "Jugar Ahora",
+  "loadingRooms": "Cargando salas...",
+  "createRoom": "Crear Sala",
+  "createNewRoom": "Crear Nueva Sala",
+  "privacityRoom": "Privacidad de Sala",
+  "publicRoom": "Pública",
+  "privateRoom": "Privada",
+  "publicRoomDescription": "Las salas públicas son visibles para todos en el lobby.",
+  "privateRoomDescription": "Las salas privadas no son visibles y requieren un código para unirse.",
+  "joinRoom": "Unirse a Sala",
+  "joinWithCode": "Unirse con Código",
+  "roomCode": "Código de Sala",
+  "roomName": "Nombre de Sala",
+  "maxPlayers": "Máximo de Jugadores",
+  "scoreToWin": "Puntos para Ganar",
+  "gameMode": "Modo de Juego",
+  "freeMode": "Modo Libre",
+  "player": "Jugador",
+  "players": "Jugadores",
+  "gameType": "Tipo de Juego",
+  "variant": "Variante",
+  "gameRules": "Reglas del Juego",
+  "cashPlay": "Juego con Dinero",
+  "apuestaMinima": "Apuesta Mínima",
+  "betAmount": "Monto de Apuesta",
+  "currency": "Moneda",
+  "creatingRoom": "Creando Sala...",
+  "cancel": "Cancelar",
+  "createRoomDescription": "Crea una sala personalizada con tus reglas.",
+  "joinRoomDescription": "Únete a una sala existente con un código.",
+  "createRoomSuccess": "Sala creada exitosamente.",
+  "SingleplayerMode": "Modo Solitario",
+  "MultiplayerMode": "Salas Multijugador",
+  "noRoomsAvailable": "No hay salas públicas disponibles para este modo de juego.",
+  "variants": {
+    "internacional": {
+      "title": "Internacional",
+      "description": "El juego clásico. Se juega a 100 o 150 puntos con reglas estándar. El jugador con la ficha más alta comienza la partida."
+    },
+    "cubano": {
+      "title": "Cubano",
+      "description": "Un juego estratégico por parejas hasta 150 puntos. Popular en Cuba, se enfoca en el trabajo en equipo y el conteo de fichas. El doble más alto no garantiza el inicio."
+    },
+    "dominicano": {
+      "title": "Dominicano",
+      "description": "Una versión rápida y competitiva de República Dominicana, jugada hasta 200 puntos. El doble seis siempre inicia la primera ronda."
+    },
+    "mexicano": {
+      "title": "Mexicano",
+      "description": "También conocido como Tren Mexicano. Una variante social popular donde los jugadores construyen sus propios 'trenes' desde un centro común. (Este modo aún no está disponible)."
+    }
+  }
+}
