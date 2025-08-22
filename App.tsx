@@ -234,10 +234,10 @@ const App: React.FC = () => {
         {/* Modal de reconexión */}
         {showReconnectModal && (
           <ConfirmModal
-            title="Ongoing Game"
-            message={`You have an active ${pendingReconnectGame} game. Do you want to reconnect and continue playing?`}
-            confirmText="Yes, reconnect"
-            cancelText="No, exit"
+            title={t("onGoingGame")}
+            message={t("reconnectMessage", { game: pendingReconnectGame})}
+            confirmText={t("yesReconnect")}
+            cancelText={t("Noexit")}
             type="warning"
             onConfirm={handleReconnect}
             onCancel={handleCancelReconnect}

@@ -5,6 +5,7 @@ import type { Room, Match, Player, DominoVariant } from "./domino/types";
 import DominoCategorySelection from "./domino/DominoCategorySelection";
 import type { Balances } from "../../types";
 import { ConfirmModal } from "../Modal";
+import { useTranslation } from "react-i18next";
 
 // Declare firebase for global script
 declare const firebase: any;
@@ -40,6 +41,7 @@ const DominoGame: React.FC<
   gamePhaseWaiting,
   setCurrentScreen
 }) => {
+  const { t } = useTranslation();
   const [localAIRoom, setLocalAIRoom] = useState<Room | null>(null);
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
   const [pendingReconnectMatch, setPendingReconnectMatch] = useState<
@@ -507,14 +509,14 @@ const DominoGame: React.FC<
     <div className="h-full flex flex-col text-white">
       {showExitGameModal && (
         <ConfirmModal
-          title="Leave the game?"
+          title={t("leaveGame")}
           message={
             isWaitingForPlayers || gamePhaseWaiting === true
-              ? "Do you want to leave the waiting room?"
-              : "You are in the middle of a match. Leaving now may cause you to lose your progress."
+              ? t("leaveGameWaitingConfirmation")
+              : t("leaveGameConfirmation")
           }
-          confirmText="Yes, leave"
-          cancelText="No, continue"
+          confirmText={t("yes")}
+          cancelText={t("no")}
           type="danger"
           onConfirm={() => {
             localAIRoom
@@ -527,7 +529,7 @@ const DominoGame: React.FC<
       {isFindingMatch && (
         <div className="fixed inset-0 bg-black/80 flex flex-col items-center justify-center z-50">
           <div className="w-16 h-16 border-4 border-t-transparent border-amber-400 rounded-full animate-spin"></div>
-          <p className="font-display text-2xl mt-4">Finding Match...</p>
+          <p className="font-display text-2xl mt-4">{t("findingMatch")}</p>
         </div>
       )}
 

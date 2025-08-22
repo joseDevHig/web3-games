@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Room, DominoVariant } from './types';
+import { useTranslation } from 'react-i18next';
 
 type Database = any;
 
@@ -15,7 +16,7 @@ const JoinWithCodeModal: React.FC<JoinWithCodeModalProps> = ({ isOpen, onClose, 
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [isJoining, setIsJoining] = useState(false);
-
+  const { t } = useTranslation();
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!code.trim() || isJoining) return;
@@ -70,13 +71,13 @@ const JoinWithCodeModal: React.FC<JoinWithCodeModalProps> = ({ isOpen, onClose, 
     >
       <div className="bg-gray-800 border-2 border-amber-500/50 rounded-lg shadow-2xl shadow-amber-500/10 w-full max-w-md flex flex-col max-h-[90vh]">
         <div className="p-6 border-b border-amber-500/20 flex justify-between items-center flex-shrink-0">
-          <h3 className="font-display text-2xl text-amber-300">Join Private Room</h3>
+          <h3 className="font-display text-2xl text-amber-300">{t('joinPrivateRoom')}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-white disabled:text-gray-600" disabled={isJoining}>&times;</button>
         </div>
         <form onSubmit={handleJoin} className="p-6 space-y-4 overflow-y-auto">
           <div>
             <label htmlFor="room-code" className="block font-bold text-sm text-gray-300 mb-2">
-              Enter Access Code for <span className="capitalize text-amber-300">{variant}</span>
+              {t('enterRoomCode')} <span className="capitalize text-amber-300">{variant}</span>
             </label>
             <input
               type="text"
@@ -94,10 +95,10 @@ const JoinWithCodeModal: React.FC<JoinWithCodeModalProps> = ({ isOpen, onClose, 
           
           <div className="flex justify-end space-x-4 pt-2">
             <button type="button" onClick={onClose} className="font-display bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg transition-colors disabled:opacity-50" disabled={isJoining}>
-              Cancel
+              {t('cancel')}
             </button>
             <button type="submit" className="font-display bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-lg transition-colors disabled:bg-green-800 disabled:cursor-wait" disabled={isJoining || !code.trim()}>
-              {isJoining ? 'Joining...' : 'Join Room'}
+              {isJoining ? t('joining') :  t('join')}
             </button>
           </div>
         </form>

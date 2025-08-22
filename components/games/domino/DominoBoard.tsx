@@ -15,6 +15,7 @@ import type {
 import DominoTile from "./DominoTile";
 import { Position } from "@/types";
 import { useIsMobile } from "@/hooks/useIsMobil";
+import { useTranslation } from "react-i18next";
 
 const getPlayerLayout = (
   players: Player[],
@@ -77,6 +78,7 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
     boneyard,
     desertorsAddress,
   } = match;
+  const { t } = useTranslation();
   const { board, boardEnds, currentPlayerId, playerOrder } = gameState;
   const [draggedDomino, setDraggedDomino] = useState<{
     domino: Domino;
@@ -1396,7 +1398,7 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
               {info.player.isAI ? "AI" : info.player.address.slice(0, 5)}
             </div>
             <div className="text-[0.6rem] text-emerald-300 mt-0.5">
-              Points: {score}
+              {t("points")}: {score}
             </div>
           </div>
 
@@ -1441,19 +1443,23 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
   const renderGameOverlays = () => {
     if (gameState.phase !== "roundOver" && gameState.phase !== "gameOver")
       return null;
-
-    const winnerText = gameState.matchWinner
-      ? `Team ${gameState.matchWinner} Wins the Match!`
-      : "Round Over!";
+    const winner = gameState.matchWinner;
+    const winnerText = winner
+      ? t("winnerMath", { team: winner, points: gameState.scoreToWin })
+      : t("roundOver");
 
     let message = "";
     if (gameState.roundWinnerInfo) {
       const { team, score, method } = gameState.roundWinnerInfo;
       if (method === "cancelled") {
-        message = "Game cancelled due to player disconnection.";
+        message = t("gameCancelled");
       } else {
-        const reasonText = method === "blocked" ? " (Game Blocked)" : "";
-        message = `Team ${team} wins the round with ${score} points${reasonText}.`;
+        const reasonText = method === "blocked" ? t("GameBlocked") : "";
+        message = t("roundWinner", {
+          team: team,
+          points: score,
+          reason: reasonText,
+        });
       }
     }
 
@@ -1468,7 +1474,7 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
           match.bet!.currency === "native" ? nativeCurrencySymbol : "USDT";
         return (
           <div className="mt-8 text-center">
-            <p className="text-lg text-gray-300">Total Pot Won:</p>
+            <p className="text-lg text-gray-300">{t("totalBet")}:</p>
             <p className="text-2xl font-bold text-green-400">
               {totalPot.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
@@ -1480,7 +1486,7 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
               onClick={onLeave}
               className="mt-4 font-display bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-8 rounded-lg text-lg transition-all duration-300 shadow-lg hover:shadow-green-500/40 transform hover:scale-105"
             >
-              Claim Reward
+              {t("claimReward")}
             </button>
           </div>
         );
@@ -1491,7 +1497,7 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
             onClick={onLeave}
             className="mt-8 font-display bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold py-3 px-8 rounded-lg text-lg transition-all duration-300 shadow-lg hover:shadow-amber-300/40 transform hover:scale-105"
           >
-            Return to Lobby
+            {t("returnToLobby")}
           </button>
         );
       }
@@ -1502,8 +1508,8 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
         {gameState.phase === "gameOver" && (
           <div className="font-display text-4xl sm:text-6xl text-amber-400 mb-4">
             {gameState.roundWinnerInfo?.method === "cancelled"
-              ? "Game Cancelled"
-              : "Game Over!"}
+              ? t("cancelledGame")
+              : t("gameOverTitle")}
           </div>
         )}
         <div className="font-display text-2xl sm:text-4xl text-white">
@@ -1677,24 +1683,25 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
 
       {/* Player Hand & Info Area */}
       <div
-        className={`w-full ${isMobile ? "h-20 " : "h-28"} 
-        ${isMyTurn ? "border-4 border-amber-500/80" : "border border-white/20"}
-        bg-black/50 pt-0 pb-2 px-1 sm:px-4 rounded-t-lg flex flex-col items-bottom z-20 shrink-0 overflow-visible no-scrollbar`}
+        className={`w-full ${isMobile ? "min-h-20" : "min-h-28"} 
+          ${
+            isMyTurn ? "border-4 border-amber-500/80" : "border border-white/20"
+          }
+          bg-black/50 pt-0 pb-2 px-1 sm:px-4 rounded-t-lg flex flex-col relative z-20 shrink-0 overflow-visible no-scrollbar`}
       >
         {/* Tiles container */}
-
         <div
-          className={`flex justify-center items-end space-x-1 ${
+          className={`absolute bottom-0 left-0 right-0 flex justify-center items-end space-x-1 ${
             isMobile ? "h-24" : "h-32"
-          } w-full overflow-x-auto overflow-visible p-2 -mt-6 relative z-30 no-scrollbar`}
+          } overflow-x-auto overflow-visible p-2 z-10 no-scrollbar`}
         >
           <div className="flex-shrink-0 text-center pr-2 sm:pr-4 mr-1 sm:mr-2">
-            <p>Points:</p>
+            <p>{t("points")}:</p>
             <p>{myScore}</p>
           </div>
 
-          <div className="flex-1 overflow-x-auto px-1 no-scrollbar">
-            <div className="inline-flex justify-center space-x-1 w-full no-scrollbar z-40">
+          <div className="flex-1 h-40 no-scrollbar overflow-x-auto overflow-y-visible overflow-visible bg-red-500/5 flex justify-center items-end">
+            <div className="inline-flex justify-center space-x-1 w-full no-scrollbar z-40 overflow-visible">
               {playerHand.map((domino, index) => (
                 <div
                   key={index}
@@ -1753,6 +1760,7 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
           )}
         </div>
       </div>
+
       {isMyTurn &&
         gameState.phase === "playing" &&
         playableMoves.size === 0 && (
@@ -1760,12 +1768,12 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
             {boneyard && boneyard.length === 0 ? (
               <div className="absolute inset-0 flex items-center justify-center z-20">
                 <div className="bg-black/80 backdrop-blur-sm text-white px-6 py-4 rounded-xl shadow-lg text-center">
-                  <p className="text-xl font-semibold">Pasa Turno</p>
+                  <p className="text-xl font-semibold">{t("passTurn")} </p>
                 </div>
               </div>
             ) : (
               <>
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-30 pointer-events-auto" />
+                <div className="absolute inset-0 bg-black/30 backdrop-blur-sm z-30 pointer-events-auto" />
 
                 <div className="absolute bottom-28 left-0 right-0 flex justify-center z-40">
                   <div className="flex overflow-x-auto space-x-2 px-4 no-scrollbar">

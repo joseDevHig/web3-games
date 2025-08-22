@@ -105,6 +105,7 @@ const RoomItem: React.FC<{
   nativeCurrencySymbol: string;
   match: Match | null;
 }> = ({ room, onJoin, nativeCurrencySymbol, match }) => {
+  const { t } = useTranslation();
   const playersCount = match?.players ? Object.keys(match.players).length : 0;
   return (
     <div className="bg-gray-800/80 p-3 sm:p-4 rounded-lg flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between shadow-lg border border-amber-600/30 hover:bg-gray-700/80 hover:border-amber-500/50 transition-all duration-300 gap-3">
@@ -113,7 +114,7 @@ const RoomItem: React.FC<{
           {room.name}
         </h4>
         <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-xs sm:text-sm text-gray-300">
-          <span>To {room.scoreToWin} pts</span>
+          <span>{t("to")} {room.scoreToWin} pts</span>
           {room.type === "cash" && room.bet ? (
             <div className="flex items-center space-x-2">
               {room.bet.currency === "native" ? (
@@ -129,7 +130,7 @@ const RoomItem: React.FC<{
               </span>
             </div>
           ) : (
-            <span>Team Play vs AI</span>
+            <span>{t("solitaireVsIA")}</span>
           )}
         </div>
         {room.createdBy && (
@@ -156,7 +157,7 @@ const RoomItem: React.FC<{
           onClick={onJoin}
           className="w-full sm:w-auto bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-6 rounded-md transition-colors transform hover:scale-105 text-sm sm:text-base"
         >
-          {room.type === "cash" ? "Join" : "Start"}
+          {room.type === "cash" ? t("join") : t("start")}
         </button>
       </div>
     </div>
