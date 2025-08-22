@@ -23,12 +23,16 @@ interface DominoTileProps {
 }
 
 const Dot: React.FC<{ scale: number }> = ({ scale }) => {
-  const size = Math.min(90, 50 + scale * 10);
+  // base = 8px cuando scale = 1
+  const sizePx = Math.round(scale * 8);
 
   return (
     <div
       className="bg-gray-800 rounded-full dot-inset-shadow"
-      style={{ width: `${size}%`, height: `${size}%` }}
+      style={{
+        width: `${sizePx}px`,
+        aspectRatio: "1 / 1",
+      }}
     />
   );
 };

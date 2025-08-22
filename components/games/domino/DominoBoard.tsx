@@ -1700,7 +1700,7 @@ const DominoBoard: React.FC<DominoBoardProps> = ({
             <p>{myScore}</p>
           </div>
 
-          <div className="flex-1 h-40 no-scrollbar overflow-x-auto overflow-y-visible overflow-visible bg-red-500/5 flex justify-center items-end">
+          <div className="flex-1 h-40 no-scrollbar overflow-x-auto overflow-y-visible overflow-visible flex justify-center items-end">
             <div className="inline-flex justify-center space-x-1 w-full no-scrollbar z-40 overflow-visible">
               {playerHand.map((domino, index) => (
                 <div
