@@ -213,7 +213,7 @@ const DominoRoom: React.FC<
   nativeCurrencySymbol,
   setCurrentScreen,
 }) => {
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const [matchState, setMatchState] = useState<Match | null>(null);
   const [log, setLog] = useState<string[]>([]);
   const [matchmakingTimer, setMatchmakingTimer] = useState<number | null>(null);
@@ -258,19 +258,16 @@ const DominoRoom: React.FC<
 
   const updateMatchState = useCallback(
     (updates: Partial<Match> | ((prevState: Match) => Match)) => {
-      // addLog("🚫 Updating match state");
       if (isLocalGame) {
         setMatchState((prevState) => {
           if (!prevState) return null;
           if (typeof updates === "function") {
             return updates(prevState);
           }
-          // This is a simple shallow merge. When `startNewRound` provides a whole new `gameState` object,
-          // it will replace the old one entirely, which is the correct behavior to prevent stale data.
+
           return { ...prevState, ...updates };
         });
       } else if (matchRef) {
-        // addLog("🚫 Updating Firebase match state");
         if (typeof updates === "function") {
           console.error(
             "Functional updates not supported for Firebase match state"
@@ -667,7 +664,7 @@ const DominoRoom: React.FC<
         id: "AI_1",
         address: "AI Opponent 1",
         isAI: true,
-        team: "B", 
+        team: "B",
       };
       const aiPlayer2: Player = {
         id: "AI_2",
@@ -792,6 +789,7 @@ const DominoRoom: React.FC<
     (a[0] === b[0] && a[1] === b[1]) || (a[0] === b[1] && a[1] === b[0]);
   const handleDrawTile = (tile: Domino, playerAddress: string) => {
     if (!matchState) return;
+
     const newHands = { ...matchState.hands };
     const prevHand = newHands[playerAddress] || [];
     newHands[playerAddress] = [...prevHand, tile];
@@ -799,10 +797,15 @@ const DominoRoom: React.FC<
     const updatedBoneyard =
       matchState.boneyard?.filter((t) => !areTilesEqual(t, tile)) || [];
 
-    updateMatchState({
-      hands: newHands,
-      boneyard: updatedBoneyard,
-    });
+    const audio = new Audio("/stealSound.ogg");
+    audio.play().catch((e) => console.error("Error playing sound:", e));
+
+    setTimeout(() => {
+      updateMatchState({
+        hands: newHands,
+        boneyard: updatedBoneyard,
+      });
+    }, 300);
   };
 
   const handleCopy = () => {
@@ -986,25 +989,30 @@ const DominoRoom: React.FC<
   // WAITING ROOM UI (Multiplayer only)
   return (
     <div className="relative w-full h-full bg-green-900/50 rounded-lg border-2 border-dashed border-amber-500/30 flex flex-col items-center justify-center text-white p-4">
-      <p className="font-display text-2xl sm:text-3xl flex flex-col sm:flex-row gap-2 sm:gap-6 items-center">
-        <span className="bg-amber-500/20 border border-amber-400 text-amber-300 px-4 py-1 rounded-lg shadow-md">
-          {"💰" + t("bet")} : <span className="font-bold">{bet?.amount ?? 0}</span>{" "}
-          {bet?.currency ?? ""}
-        </span>
+      {matchState.roomCode && (
+        <p className="font-display text-2xl sm:text-3xl flex flex-col sm:flex-row gap-2 sm:gap-6 items-center">
+          <span className="bg-amber-500/20 border border-amber-400 text-amber-300 px-4 py-1 rounded-lg shadow-md">
+            {"💰" + t("bet")} :{" "}
+            <span className="font-bold">{bet?.amount ?? 0}</span>{" "}
+            {bet?.currency ?? ""}
+          </span>
 
-        <span
-          onClick={handleCopy}
-          className="bg-green-500/20 border border-green-400 text-green-300 px-4 py-1 rounded-lg shadow-md cursor-pointer hover:bg-green-500/30 transition select-none flex items-center gap-2"
-        >
-          🔑 {t("code")} : <span className="font-mono">{roomCode}</span>
-          <FiCopy className="text-green-300 hover:text-green-200" size={18} />
-          {copied && (
-            <span className="ml-2 text-xs text-green-400">{t("copied")}</span>
-          )}
-        </span>
-      </p>
+          <span
+            onClick={handleCopy}
+            className="bg-green-500/20 border border-green-400 text-green-300 px-4 py-1 rounded-lg shadow-md cursor-pointer hover:bg-green-500/30 transition select-none flex items-center gap-2"
+          >
+            🔑 {t("code")} : <span className="font-mono">{roomCode}</span>
+            <FiCopy className="text-green-300 hover:text-green-200" size={18} />
+            {copied && (
+              <span className="ml-2 text-xs text-green-400">{t("copied")}</span>
+            )}
+          </span>
+        </p>
+      )}
 
-      <h3 className="font-display text-2xl sm:text-3xl">{t("waitingForPlayers")}</h3>
+      <h3 className="font-display text-2xl sm:text-3xl">
+        {t("waitingForPlayers")}
+      </h3>
       <p className="mt-4 text-amber-300 font-mono text-4xl sm:text-5xl">
         {players.length} / {maxPlayers}
       </p>
@@ -1012,7 +1020,7 @@ const DominoRoom: React.FC<
       <div className="h-12 mt-4 text-center">
         {matchmakingTimer !== null ? (
           <p className="text-base sm:text-lg animate-pulse">
-           {t("waitingForMorePlayers")} {" "}
+            {t("waitingForMorePlayers")}{" "}
             <span className="font-bold text-xl">{matchmakingTimer}</span>s
           </p>
         ) : players.length < 2 ? (
@@ -1039,7 +1047,7 @@ const DominoRoom: React.FC<
                 }`}
               >
                 <span className="text-sm truncate">
-                  {p.address.substring(0, 12)}... {p.id === address && (t("you"))}
+                  {p.address.substring(0, 12)}... {p.id === address && t("you")}
                 </span>
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full ${
