@@ -30,7 +30,7 @@ type Database = any;
 // --- GAME CONSTANTS ---
 const TURN_DURATION = 30; // seconds
 const AI_THINK_TIME = 1500; // ms
-const HAND_SIZE = 7;
+const HAND_SIZE = 6;
 const MATCHMAKING_TIMEOUT = 30; // seconds
 const NEW_ROUND_DELAY = 5000; // 5 seconds
 const TREASURY_WALLET = "0x7236A11cFB10f002f60823C12AC6f616A7Ccd4e9";
@@ -163,15 +163,129 @@ const setupNewRound = (
         }
   }
 
-  hands[startingPlayerId] = hands[startingPlayerId].filter(
-    (d) => d !== startingDomino
-  );
+  let test = true;
+  if(test){
+    startingDomino = [6, 6];
+    for (const playerId in hands) {
+      const hand = hands[playerId];
+      const dominoIndex = hand.findIndex(d => 
+        d[0] === 6 && d[1] === 6
+      );
+      if (dominoIndex !== -1) {
+        hands[playerId] = hand.filter((_, index) => index !== dominoIndex);
+        startingPlayerId = playerId;
+        break;
+      }
+    }
+  } else {
+    hands[startingPlayerId] = hands[startingPlayerId].filter(
+      (d) => d !== startingDomino
+    );
+  }
+  
   const startIdx = playerOrder.indexOf(startingPlayerId);
-
+  let board: BoardTile[] = [{ domino: startingDomino!, placement: "start" }];
+  let boardEnds: [number, number] = [startingDomino![0], startingDomino![1]];
+  
+  if(test){
+    const leftDominoes: Domino[] = [
+      [6, 4], // Se conecta con el 6 del centro
+      [4, 2], // Se conecta con el 4 anterior
+      [2, 1], // Se conecta con el 2 anterior
+      [1, 0], // Se conecta con el 1 anterior
+      [0, 3], // Se conecta con el 0 anterior
+      [3, 6], // Se conecta con el 3 anterior
+      [6, 1], // Se conecta con el 6 anterior
+      [1, 5], // Se conecta con el 1 anterior
+      [5, 2]  // Se conecta con el 5 anterior
+    ];
+    
+    const rightDominoes: Domino[] = [
+      [6, 5], // Se conecta con el 6 del centro
+      [5, 4], // Se conecta con el 5 anterior
+      [4, 3], // Se conecta con el 4 anterior
+      [3, 2], // Se conecta con el 3 anterior
+      [2, 0], // Se conecta con el 2 anterior
+      [0, 4], // Se conecta con el 0 anterior
+      [4, 1], // Se conecta con el 4 anterior
+      [1, 3], // Se conecta con el 1 anterior
+      [3, 5]  // Se conecta con el 3 anterior
+    ];
+    
+    // Verificar duplicados
+    const allTestDominoes = [startingDomino!, ...leftDominoes, ...rightDominoes];
+    const dominoStrings = allTestDominoes.map(d => [d[0], d[1]].sort().join(','));
+    const hasDuplicates = dominoStrings.length !== new Set(dominoStrings).size;
+    console.log('¿Hay fichas duplicadas?', hasDuplicates);
+    if (hasDuplicates) {
+      const duplicates = dominoStrings.filter((item, index) => dominoStrings.indexOf(item) !== index);
+      console.log('Fichas duplicadas:', duplicates);
+    }
+    
+    // Buscar y quitar fichas de la izquierda
+    for (const testDomino of leftDominoes) {
+      // Buscar en las manos primero
+      let found = false;
+      for (const playerId in hands) {
+        const hand = hands[playerId];
+        const dominoIndex = hand.findIndex(d => 
+          d.includes(testDomino[0]) && d.includes(testDomino[1])
+        );
+        if (dominoIndex !== -1) {
+          hands[playerId] = hand.filter((_, index) => index !== dominoIndex);
+          found = true;
+          break;
+        }
+      }
+      // Si no se encontró en las manos, quitarla del boneyard
+      if (!found) {
+        const boneyardIndex = boneyard.findIndex(d => 
+          d.includes(testDomino[0]) && d.includes(testDomino[1])
+        );
+        if (boneyardIndex !== -1) {
+          boneyard.splice(boneyardIndex, 1);
+        }
+      }
+      board.push({ domino: testDomino, placement: "left" });
+    }
+    
+    // Buscar y quitar fichas de la derecha
+    for (const testDomino of rightDominoes) {
+      // Buscar en las manos primero
+      let found = false;
+      for (const playerId in hands) {
+        const hand = hands[playerId];
+        const dominoIndex = hand.findIndex(d => 
+          d.includes(testDomino[0]) && d.includes(testDomino[1])
+        );
+        if (dominoIndex !== -1) {
+          hands[playerId] = hand.filter((_, index) => index !== dominoIndex);
+          found = true;
+          break;
+        }
+      }
+      // Si no se encontró en las manos, quitarla del boneyard
+      if (!found) {
+        const boneyardIndex = boneyard.findIndex(d => 
+          d.includes(testDomino[0]) && d.includes(testDomino[1])
+        );
+        if (boneyardIndex !== -1) {
+          boneyard.splice(boneyardIndex, 1);
+        }
+      }
+      board.push({ domino: testDomino, placement: "right" });
+    }
+    
+    // Actualizar extremos del tablero
+    const lastLeftDomino = leftDominoes[leftDominoes.length - 1];
+    const lastRightDomino = rightDominoes[rightDominoes.length - 1];
+    boardEnds[0] = lastLeftDomino[1]; // Extremo izquierdo libre
+    boardEnds[1] = lastRightDomino[1]; // Extremo derecho libre
+  }
   const newGameState: GameState = {
     phase: "playing",
-    board: [{ domino: startingDomino!, placement: "start" }],
-    boardEnds: [startingDomino![0], startingDomino![1]],
+    board: board,
+    boardEnds: boardEnds,
     currentPlayerId: playerOrder[(startIdx + 1) % playerOrder.length],
     playerOrder,
     passes: 0,

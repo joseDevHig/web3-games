@@ -18,7 +18,6 @@ declare global {
 
 // --- Network Configurations ---
 const NETWORKS = {
-    
     'bsc-mainnet': {
         chainId: '0x38', // 56
         chainName: 'Binance Smart Chain Mainnet',
