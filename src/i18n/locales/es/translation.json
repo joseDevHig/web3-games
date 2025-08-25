@@ -97,6 +97,8 @@
   "returnToLobby": "Regresar al Lobby",
   "cancelledGame": "Juego Cancelado",
   "gameOverTitle": "Juego Terminado",
+  "disconnect": "Desconectar",
+  "youLeftGame": "Has salido de la partida.",
   "variants": {
     "internacional": {
       "title": "Internacional",

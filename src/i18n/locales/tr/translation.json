@@ -97,6 +97,8 @@
   "returnToLobby": "Lobiye Dön",
   "cancelledGame": "Oyun İptal Edildi",
   "gameOverTitle": "Oyun Bitti",
+  "disconnect": "Bağlantı Kesildi",
+  "youLeftGame": "Oyundan çıktınız.",
   "variants": {
     "internacional": {
       "title": "Uluslararası",

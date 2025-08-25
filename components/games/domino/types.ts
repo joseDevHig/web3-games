@@ -37,6 +37,7 @@ export interface Match {
   boneyard?: Domino[];
   desertorsAddress?: string[];
   roomCode?: string;
+  updatedAt?: number;
 }
 
 // Represents a lobby entry, a template for creating matches
@@ -65,6 +66,9 @@ export interface Player {
   team: string;
   isConnected?: boolean;
   isDesertor?: boolean;
+  left?: boolean;
+  name?: string;
+  avatarUrl?: string;
 }
 
 export interface BoardTile {
@@ -84,6 +88,7 @@ export interface DominoBoardProps {
   turnTimer?: number;
   onLeave: () => void;
   nativeCurrencySymbol: string;
+
 }
 
 export interface PlayerLayoutInfo {

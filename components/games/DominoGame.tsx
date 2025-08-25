@@ -6,6 +6,8 @@ import DominoCategorySelection from "./domino/DominoCategorySelection";
 import type { Balances } from "../../types";
 import { ConfirmModal } from "../Modal";
 import { useTranslation } from "react-i18next";
+import { getActivePlayersCount } from "../helpers/PlayerHelper";
+import { get } from "http";
 
 // Declare firebase for global script
 declare const firebase: any;
@@ -39,7 +41,7 @@ const DominoGame: React.FC<
   setBackButtonHandler,
   preselectedMatchId,
   gamePhaseWaiting,
-  setCurrentScreen
+  setCurrentScreen,
 }) => {
   const { t } = useTranslation();
   const [localAIRoom, setLocalAIRoom] = useState<Room | null>(null);
@@ -187,27 +189,55 @@ const DominoGame: React.FC<
       }
 
       const matchData = snapshot.val();
-      const playersCount = Object.keys(matchData.players).length;
+      const players = matchData.players || {};
+      const playersCount = getActivePlayersCount(players);
 
-      if (matchData.gameState?.phase === "waiting" && playersCount < 2) {
-        const updates: Record<string, null> = {
-          [`matches/${matchId}`]: null,
-        };
+      if (matchData.gameState?.phase === "waiting") {
+        if (playersCount < 2) {
+          // Caso: menos de 2 jugadores → eliminar match (y room si aplica)
+          const updates: Record<string, null> = {
+            [`matches/${matchId}`]: null,
+          };
 
-        if (matchData.roomTemplateId) {
-          const roomSnap = await database
-            .ref(`rooms/${matchData.roomTemplateId}`)
-            .once("value");
-          if (roomSnap.exists() && roomSnap.val()?.createdBy === "user") {
-            updates[`rooms/${matchData.roomTemplateId}`] = null;
+          if (matchData.roomTemplateId) {
+            const roomSnap = await database
+              .ref(`rooms/${matchData.roomTemplateId}`)
+              .once("value");
+            if (roomSnap.exists() && roomSnap.val()?.createdBy === "user") {
+              updates[`rooms/${matchData.roomTemplateId}`] = null;
+            }
           }
-        }
 
-        await database.ref().update(updates);
-        console.log(
-          "Match eliminada y room asociada (si era creada por usuario)"
-        );
-      } else {
+          await database.ref().update(updates);
+          console.log(
+            "Match eliminada y room asociada (si era creada por usuario)"
+          );
+        } else {
+          console.log(
+            `Jugador ${address} marcándose como left en match ${matchId}`
+          );
+
+          const playerRef = matchRef.child(`players/${address}`);
+          await playerRef.update({
+            isConnected: false,
+            left: true,
+            updatedAt: Date.now(),
+          });
+          await matchRef.update({
+            updatedAt: Date.now(),
+          });
+
+          if (getActivePlayersCount(players) < 2) {
+            await matchRef.child("gameState").update({
+              matchmakingTimerEnd: null,
+            });
+            return;
+          }
+          console.log(
+            `Jugador ${address} marcado como left y estado refrescado`
+          );
+        }
+      } else if (matchData.gameState?.phase === "playing") {
         const desertorsRef = matchRef.child("desertorsAddress");
         await desertorsRef.transaction((current: string | string[]) => {
           if (current) {
@@ -217,6 +247,12 @@ const DominoGame: React.FC<
           }
           return [address];
         });
+
+        await matchRef.update({
+          updatedAt: Date.now(),
+        });
+
+        console.log(`Jugador ${address} agregado a desertors`);
       }
     } catch (error) {
       console.error("Error obteniendo o actualizando el match:", error);
@@ -277,6 +313,7 @@ const DominoGame: React.FC<
 
       // --- NEW: RECONNECTION LOGIC ---
       // First, check if the user has an ongoing match for this variant that isn't finished.
+      console.log("esta entrando a la lógica de reconexión cuando me salgo");
       const userMatchesQuery = matchesRef
         .orderByChild(`players/${address}/id`)
         .equalTo(address);
@@ -318,7 +355,7 @@ const DominoGame: React.FC<
       for (const matchId in openMatches) {
         const match = openMatches[matchId];
         const playerCount = match.players
-          ? Object.keys(match.players).length
+          ? getActivePlayersCount(match.players)
           : 0;
 
         if (
@@ -335,9 +372,13 @@ const DominoGame: React.FC<
                 isAI: boolean;
                 team: string;
                 isConnected: boolean;
+                left?: boolean;
               };
             }) => {
-              if (!players || Object.keys(players).length < room.maxPlayers) {
+              if (
+                !players ||
+                getActivePlayersCount(players) < room.maxPlayers
+              ) {
                 if (!players) players = {};
                 players[address] = {
                   id: address,
@@ -345,6 +386,7 @@ const DominoGame: React.FC<
                   isAI: false,
                   team: "A",
                   isConnected: true,
+                  left: false,
                 };
                 return players;
               }

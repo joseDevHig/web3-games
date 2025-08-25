@@ -6,6 +6,7 @@ import { defaultCashRoomData } from "../../../data/defaultRooms";
 import CreateRoomModal from "./CreateRoomModal";
 import JoinWithCodeModal from "./JoinWithCodeModal";
 import { useTranslation } from "react-i18next";
+import { getActivePlayersCount } from "@/components/helpers/PlayerHelper";
 
 // Declare firebase for global script
 declare const firebase: any;
@@ -106,7 +107,7 @@ const RoomItem: React.FC<{
   match: Match | null;
 }> = ({ room, onJoin, nativeCurrencySymbol, match }) => {
   const { t } = useTranslation();
-  const playersCount = match?.players ? Object.keys(match.players).length : 0;
+  const playersCount = match?.players ? getActivePlayersCount(match.players) : 0;
   return (
     <div className="bg-gray-800/80 p-3 sm:p-4 rounded-lg flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between shadow-lg border border-amber-600/30 hover:bg-gray-700/80 hover:border-amber-500/50 transition-all duration-300 gap-3">
       <div className="flex-grow">

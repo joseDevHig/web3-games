@@ -18,12 +18,17 @@ import type {
 import DominoBoard from "./DominoBoard";
 import { FiCopy } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
+import {
+  getActivePlayers,
+  getActivePlayersCount,
+} from "@/components/helpers/PlayerHelper";
+import { get } from "http";
 
 // Declare firebase for any;
 type Database = any;
 
 // --- GAME CONSTANTS ---
-const TURN_DURATION = 3600; // seconds
+const TURN_DURATION = 30; // seconds
 const AI_THINK_TIME = 1500; // ms
 const HAND_SIZE = 7;
 const MATCHMAKING_TIMEOUT = 30; // seconds
@@ -585,7 +590,21 @@ const DominoRoom: React.FC<
     if (isLocalGame || !address || !playerRef || !matchRef) return;
 
     // Set connected status on entering the room
-    playerRef.update({ isConnected: true });
+    playerRef.once("value").then((snapshot: any) => {
+      const data = snapshot.val();
+      if (data) {
+        // Si estaba marcado como left, lo reactivamos
+        if (data.left === true) {
+          console.log("Reingresando jugador que había salido", data);
+          playerRef.update({ isConnected: true, left: false });
+        }
+        // Si nunca estuvo como left, solo aseguras conexión
+        else {
+          console.log("Jugador ya estaba en partida, reconectando", data);
+          playerRef.update({ isConnected: true });
+        }
+      }
+    });
 
     const onMatchValueChange = (snapshot: any) => {
       const data = snapshot.val() as Match;
@@ -712,7 +731,7 @@ const DominoRoom: React.FC<
   );
   useEffect(() => {
     if (isLocalGame || !isHost || !matchState || !matchRef) return;
-    const players = Object.values(matchState.players || {});
+    const players = getActivePlayers(matchState.players || {});
     const playerCount = players.length;
     const { gameState, variant, mode, maxPlayers } = matchState;
 
@@ -735,7 +754,11 @@ const DominoRoom: React.FC<
       }
 
       // Priority 2: If we have enough players but are not full, start a countdown timer.
-      if (playerCount >= 2 && !gameState.matchmakingTimerEnd) {
+      if (
+        mode === "free" &&
+        playerCount >= 2 &&
+        !gameState.matchmakingTimerEnd
+      ) {
         matchRef.child("gameState").update({
           matchmakingTimerEnd: Date.now() + MATCHMAKING_TIMEOUT * 1000,
         });
@@ -749,29 +772,37 @@ const DominoRoom: React.FC<
     if (matchmakingTimeoutRef.current !== null)
       clearTimeout(matchmakingTimeoutRef.current);
     if (!isHost || !matchState?.gameState?.matchmakingTimerEnd) return;
-    const handleTimeout = () => {
-      matchRef.once("value", (snapshot: { val: () => Match }) => {
-        const currentMatch = snapshot.val() as Match;
-        if (!currentMatch || currentMatch.gameState?.phase !== "waiting")
-          return;
-        const players = Object.values(currentMatch.players || {});
-        if (players.length >= 2) {
-          // Start with at least 2 players
-          startNewRound(
-            players,
-            currentMatch.gameState.scoreToWin,
-            currentMatch.variant,
-            currentMatch.mode
-          );
-        }
-      });
+
+    const handleTimeout = async () => {
+      const snapshot = await matchRef.once("value");
+      const currentMatch = snapshot.val() as Match;
+      if (!currentMatch || currentMatch.gameState?.phase !== "waiting") return;
+
+      const players = getActivePlayers(currentMatch.players);
+
+      if (players.length < 2) {
+        await matchRef.child("gameState").update({
+          matchmakingTimerEnd: null,
+        });
+        return;
+      }
+
+      startNewRound(
+        players,
+        currentMatch.gameState.scoreToWin,
+        currentMatch.variant,
+        currentMatch.mode
+      );
     };
+
     const timeoutDuration =
       matchState.gameState.matchmakingTimerEnd - Date.now();
+
     matchmakingTimeoutRef.current = setTimeout(
       handleTimeout,
       Math.max(0, timeoutDuration)
     );
+
     return () => {
       if (matchmakingTimeoutRef.current)
         clearTimeout(matchmakingTimeoutRef.current);
@@ -901,7 +932,11 @@ const DominoRoom: React.FC<
   // --- UI: TIMERS ---
   useEffect(() => {
     const matchmakingTimerEnd = matchState?.gameState?.matchmakingTimerEnd;
-    if (!matchmakingTimerEnd || matchState?.gameState?.phase !== "waiting") {
+    if (
+      !matchmakingTimerEnd ||
+      matchState?.gameState?.phase !== "waiting" ||
+      (matchState.players && getActivePlayersCount(matchState.players) < 2)
+    ) {
       setMatchmakingTimer(null);
       return;
     }
@@ -913,6 +948,7 @@ const DominoRoom: React.FC<
   }, [
     matchState?.gameState?.matchmakingTimerEnd,
     matchState?.gameState?.phase,
+    matchState?.players,
   ]);
 
   useEffect(() => {
@@ -958,7 +994,7 @@ const DominoRoom: React.FC<
     bet,
     roomCode,
   } = matchState;
-  const players = playerMap ? Object.values(playerMap) : [];
+  const players = getActivePlayers(playerMap) as Player[];
 
   if (
     gameState?.phase === "playing" ||
@@ -1014,7 +1050,7 @@ const DominoRoom: React.FC<
         {t("waitingForPlayers")}
       </h3>
       <p className="mt-4 text-amber-300 font-mono text-4xl sm:text-5xl">
-        {players.length} / {maxPlayers}
+        {getActivePlayersCount(playerMap)} / {maxPlayers}
       </p>
 
       <div className="h-12 mt-4 text-center">
@@ -1023,7 +1059,7 @@ const DominoRoom: React.FC<
             {t("waitingForMorePlayers")}{" "}
             <span className="font-bold text-xl">{matchmakingTimer}</span>s
           </p>
-        ) : players.length < 2 ? (
+        ) : getActivePlayersCount(playerMap) < 2 ? (
           <p className="text-base sm:text-lg animate-pulse">
             {t("waitingForAnOpponent")}
           </p>
@@ -1038,6 +1074,7 @@ const DominoRoom: React.FC<
         </h4>
         <div className="space-y-2">
           {players
+            .filter((p) => p && p.address)
             .sort((a, b) => a.id.localeCompare(b.id))
             .map((p) => (
               <div

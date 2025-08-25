@@ -8,6 +8,7 @@ import { ConfirmModal } from "./components/Modal";
 import { useTranslation } from "react-i18next";
 import "./src/i18n/i18n";
 import LanguageSelector from "./components/LanguageSelector";
+import { getActivePlayers, getActivePlayersCount } from "./components/helpers/PlayerHelper";
 
 declare const firebase: any;
 
@@ -62,7 +63,6 @@ const App: React.FC = () => {
     "home"
   );
 
-
   // Firebase
   const database = useMemo(() => {
     const firebaseConfig = {
@@ -102,8 +102,12 @@ const App: React.FC = () => {
             const isDeserter =
               Array.isArray(match.desertorsAddress) &&
               match.desertorsAddress.includes(address);
+            const isNotLeft =
+              !!address &&
+              getActivePlayers(match.players).some((p) => p.id === address);
+            console.log("isNotLeft", isNotLeft);
 
-            if (match.gameState?.phase !== "gameOver" && !isDeserter) {
+            if (match.gameState?.phase !== "gameOver" && !isDeserter && isNotLeft) {
               if (match.gameState?.phase === "waiting") {
                 setIsWaitingForPlayers(true);
               }
@@ -134,61 +138,60 @@ const App: React.FC = () => {
   };
 
   const handleCancelReconnect = async () => {
-  try {
-    if (pendingReconnectMatch && address && database) {
-      const matchRef = database.ref(`matches/${pendingReconnectMatch}`);
-      const snapshot = await matchRef.once("value");
+    try {
+      if (pendingReconnectMatch && address && database) {
+        const matchRef = database.ref(`matches/${pendingReconnectMatch}`);
+        const snapshot = await matchRef.once("value");
 
-      if (!snapshot.exists()) {
-        console.log("No existe un match con ese ID");
-      } else {
-        const matchData = snapshot.val();
-        const playersCount = Object.keys(matchData.players || {}).length;
-
-        // ✅ Si la match está en fase waiting y solo hay un jugador, eliminar match y room
-        if (matchData.gameState?.phase === "waiting" && playersCount < 2) {
-          const updates: Record<string, null> = {
-            [`matches/${pendingReconnectMatch}`]: null,
-          };
-
-          if (matchData.roomTemplateId) {
-            const roomSnap = await database
-              .ref(`rooms/${matchData.roomTemplateId}`)
-              .once("value");
-
-            if (roomSnap.exists() && roomSnap.val()?.createdBy === "user") {
-              updates[`rooms/${matchData.roomTemplateId}`] = null;
-            }
-          }
-
-          await database.ref().update(updates);
-          console.log(
-            "Match eliminada y room asociada (si era creada por usuario)"
-          );
+        if (!snapshot.exists()) {
+          console.log("No existe un match con ese ID");
         } else {
-          // Si no cumple las condiciones, solo agregar como desertor
-          const desertersRef = matchRef.child("desertorsAddress");
-          await desertersRef.transaction((current: string | string[]) => {
-            if (current) {
-              if (!Array.isArray(current)) return [address];
-              if (!current.includes(address)) return [...current, address];
-              return current;
+          const matchData = snapshot.val();
+          const playersCount = getActivePlayersCount(matchData.players);
+
+          // ✅ Si la match está en fase waiting y solo hay un jugador, eliminar match y room
+          if (matchData.gameState?.phase === "waiting" && playersCount < 2) {
+            const updates: Record<string, null> = {
+              [`matches/${pendingReconnectMatch}`]: null,
+            };
+
+            if (matchData.roomTemplateId) {
+              const roomSnap = await database
+                .ref(`rooms/${matchData.roomTemplateId}`)
+                .once("value");
+
+              if (roomSnap.exists() && roomSnap.val()?.createdBy === "user") {
+                updates[`rooms/${matchData.roomTemplateId}`] = null;
+              }
             }
-            return [address];
-          });
+
+            await database.ref().update(updates);
+            console.log(
+              "Match eliminada y room asociada (si era creada por usuario)"
+            );
+          } else {
+            // Si no cumple las condiciones, solo agregar como desertor
+            const desertersRef = matchRef.child("desertorsAddress");
+            await desertersRef.transaction((current: string | string[]) => {
+              if (current) {
+                if (!Array.isArray(current)) return [address];
+                if (!current.includes(address)) return [...current, address];
+                return current;
+              }
+              return [address];
+            });
+          }
         }
       }
+    } catch (error) {
+      console.error("Error en handleCancelReconnect:", error);
     }
-  } catch (error) {
-    console.error("Error en handleCancelReconnect:", error);
-  }
 
-  setPendingReconnectMatch(null);
-  setPendingReconnectGame(null);
-  setShowReconnectModal(false);
-  setInGame(false);
-};
-
+    setPendingReconnectMatch(null);
+    setPendingReconnectGame(null);
+    setShowReconnectModal(false);
+    setInGame(false);
+  };
 
   // Control del botón atrás
   const handleGoToLobby = () => setSelectedGame(null);
@@ -235,7 +238,7 @@ const App: React.FC = () => {
         {showReconnectModal && (
           <ConfirmModal
             title={t("onGoingGame")}
-            message={t("reconnectMessage", { game: pendingReconnectGame})}
+            message={t("reconnectMessage", { game: pendingReconnectGame })}
             confirmText={t("yesReconnect")}
             cancelText={t("Noexit")}
             type="warning"
