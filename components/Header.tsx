@@ -35,12 +35,15 @@ interface HeaderProps {
   availableNetworks: object;
   nativeCurrencySymbol: string;
   isSelectedGame: boolean;
-  onBack?: () => void; // 👈 nueva prop
+  onBack?: () => void; 
+  onUpdatePlayer?: (updated: Partial<Player>) => void;
+  uploadAvatar?: (file: File, playerId: string) => Promise<string>;
 }
 
 const Header: React.FC<HeaderProps> = ({
   address,
   balances,
+  player,
   disconnectWallet,
   networkName,
   setCurrentNetwork,
@@ -48,8 +51,8 @@ const Header: React.FC<HeaderProps> = ({
   nativeCurrencySymbol,
   isSelectedGame,
   onBack,
+  onUpdatePlayer,
 }) => {
-
   const { t } = useTranslation();
 
   return (
@@ -147,9 +150,14 @@ const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
 
-          {address && (
+          {address && player && (
             <div className="w-full flex justify-end order-3">
-              <WalletInfoModal address={address} />
+              <WalletInfoModal
+                address={address}
+                player={player}
+                balances={balances ?? { native: "", USDT: "" }}
+                onUpdatePlayer={onUpdatePlayer}
+              />
               {/* <span className="text-amber-300 font-mono text-xs bg-gray-900/50 px-2 py-0.5 rounded-md">
                 {truncateAddress(address)}
               </span> */}

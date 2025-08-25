@@ -8,7 +8,12 @@ import { ConfirmModal } from "./components/Modal";
 import { useTranslation } from "react-i18next";
 import "./src/i18n/i18n";
 import LanguageSelector from "./components/LanguageSelector";
-import { getActivePlayers, getActivePlayersCount } from "./components/helpers/PlayerHelper";
+import {
+  getActivePlayers,
+  getActivePlayersCount,
+} from "./components/helpers/PlayerHelper";
+import { Player } from "./components/games/domino/types";
+import { usePlayer } from "./hooks/usePlayer";
 
 declare const firebase: any;
 
@@ -81,6 +86,9 @@ const App: React.FC = () => {
     return firebase.database();
   }, []);
 
+   const { player, loading } = usePlayer(address ?? '', database);
+   console.log("Jugador actual:", player);
+
   // Verificar si hay partida activa al entrar
   useEffect(() => {
     const checkActiveMatch = async () => {
@@ -107,7 +115,11 @@ const App: React.FC = () => {
               getActivePlayers(match.players).some((p) => p.id === address);
             console.log("isNotLeft", isNotLeft);
 
-            if (match.gameState?.phase !== "gameOver" && !isDeserter && isNotLeft) {
+            if (
+              match.gameState?.phase !== "gameOver" &&
+              !isDeserter &&
+              isNotLeft
+            ) {
               if (match.gameState?.phase === "waiting") {
                 setIsWaitingForPlayers(true);
               }
@@ -199,10 +211,25 @@ const App: React.FC = () => {
     () => handleGoToLobby
   );
 
+
   const handleSelectGame = (gameId: string) => {
     setSelectedGame(gameId);
     setBackButtonHandler(() => handleGoToLobby);
   };
+
+  const handleUpdatePlayer = async (updated: Partial<Player>) => {
+    if (address && database) {
+      await database.ref(`players/${address}`).update(updated);
+    }
+  };
+
+  const uploadAvatar = async (file: File, playerId: string) => {
+  const storageRef = firebase.storage().ref();
+  const avatarRef = storageRef.child(`avatars/${playerId}-${file.name}`);
+  await avatarRef.put(file);
+  return await avatarRef.getDownloadURL();
+};
+
   // Renderizado de juegos
   const renderGame = () => {
     switch (selectedGame) {
@@ -253,6 +280,7 @@ const App: React.FC = () => {
               <Header
                 address={address}
                 balances={balances}
+                player={player ?? undefined}
                 disconnectWallet={disconnectWallet}
                 networkName={networkName}
                 setCurrentNetwork={setCurrentNetwork}
@@ -260,6 +288,7 @@ const App: React.FC = () => {
                 nativeCurrencySymbol={nativeCurrencySymbol}
                 isSelectedGame={!!selectedGame}
                 onBack={backButtonHandler}
+                onUpdatePlayer={handleUpdatePlayer}
               />
             )}
 

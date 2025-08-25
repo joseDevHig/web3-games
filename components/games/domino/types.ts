@@ -69,6 +69,10 @@ export interface Player {
   left?: boolean;
   name?: string;
   avatarUrl?: string;
+  totalMatches?: number;
+  wins?: number;
+  losses?: number;
+  earnings?: number;
 }
 
 export interface BoardTile {

@@ -58,10 +58,10 @@ export default function LanguageSelector() {
     <div ref={selectorRef} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="w-12 h-12 flex items-center justify-center border border-gray-400 rounded-md bg-transparent hover:bg-gray-100 shadow-md transition"
+        className="w-12 py-2 px-3 flex items-center justify-center border border-gray-400 rounded-md bg-transparent hover:bg-gray-100 shadow-md transition"
       >
         <span
-          className={languages.find((l) => l.code === selectedLang)?.flag}
+          className={  languages.find((l) => l.code === selectedLang)?.flag}
         ></span>
       </button>
 
